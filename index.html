@@ -1,0 +1,2028 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Print Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed 3D stage. Controls float in a panel at the left on desktop and sit in a bottom sheet on phones. */
+:root{
+  --stage:#cdd6dd;
+  --panel:rgba(247,249,250,.92);
+  --ink:#13202b;
+  --muted:#556473;
+  --line:#c9d3db;
+  --field:#e9eef2;
+  --accent:#0a7a94;
+  --accent-ink:#ffffff;
+  --good:#1d8a4a;
+  --busy:#b36b00;
+  --display:'Bricolage Grotesque','Helvetica Neue',Arial,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#10181e; --panel:rgba(21,29,37,.92); --ink:#e7eef3; --muted:#9aaab7; --line:#2d3b47; --field:#1b2630;
+    --accent:#4fc6e0; --accent-ink:#04222b; --good:#5fd08b; --busy:#f0b04a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#10181e; --panel:rgba(21,29,37,.92); --ink:#e7eef3; --muted:#9aaab7; --line:#2d3b47; --field:#1b2630;
+  --accent:#4fc6e0; --accent-ink:#04222b; --good:#5fd08b; --busy:#f0b04a; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--stage);color:var(--ink);font:14px/1.45 var(--body);overflow:hidden}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+#stage{position:absolute;inset:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+#hud{position:absolute;inset:0;pointer-events:none;display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:12px;
+  padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#hud>*{pointer-events:auto}
+#top{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;pointer-events:none}
+#top>*{pointer-events:auto}
+.brand{margin:0;font:700 22px/1 var(--display);letter-spacing:-.01em;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.seg{display:inline-flex;max-width:100%;overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.seg button{font:500 13px var(--body);color:var(--muted);background:none;border:0;border-radius:7px;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button svg{display:none}
+.stapleSeg{display:flex;flex-wrap:wrap;align-self:stretch}
+.stapleSeg button{flex:1 1 auto}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#panel{justify-self:start;align-self:start;width:min(370px,100%);max-height:100%;min-height:0;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.phead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;gap:8px}
+#ptitle{font:700 17px/1.1 var(--display)}
+#pcollapse{display:none;font:500 12px var(--body);color:var(--muted);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:5px 10px;cursor:pointer}
+#pbody{padding:2px 14px 14px;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:12px}
+#panel.collapsed #pbody{display:none}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font:600 13px var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:9px;padding:9px 13px;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover:not(:disabled){filter:brightness(1.07)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.meta{margin:0;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.lead{margin:0;font-size:14px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);letter-spacing:.02em}
+.fld .lab{display:flex;justify-content:space-between;gap:8px;text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-weight:600}
+.fld output,.mono{font-family:var(--mono);color:var(--ink);letter-spacing:0;text-transform:none}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+input[type=text]{flex:1;min-width:0;font:500 13px var(--mono);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.chk{display:inline-flex;gap:6px;align-items:center;color:var(--muted);font-size:13px}
+.chk input{accent-color:var(--accent)}
+.stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0;font-size:13px}
+.stats dt{color:var(--muted)}
+.stats dd{margin:0;font-family:var(--mono);text-align:right;overflow-wrap:anywhere}
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:600 12px var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.flow i{font-style:normal;color:var(--accent)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;max-height:200px;overflow:auto;padding:3px}
+.thumb{position:relative;padding:0;border:2px solid var(--line);border-radius:5px;background:#fff;cursor:pointer;overflow:hidden;aspect-ratio:1/1.414;opacity:.55}
+.thumb canvas{display:block;width:100%;height:100%}
+.thumb span{position:absolute;right:2px;bottom:2px;font:500 10px var(--mono);background:rgba(10,20,28,.78);color:#fff;border-radius:3px;padding:0 4px}
+.thumb[aria-pressed="true"]{border-color:var(--accent);opacity:1;box-shadow:0 0 0 1px var(--accent)}
+.outbox{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.outbox li{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 10px;background:var(--field);border:1px solid var(--line);border-radius:8px}
+.outbox li span:last-child{font-family:var(--mono);color:var(--muted);text-align:right}
+.outbox:empty::after{content:"Finished bundles will collect here.";color:var(--muted);font-size:13px}
+#statusbar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-top:1px solid var(--line);font:500 12px var(--mono);color:var(--muted)}
+#statusbar i{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+#statusbar[data-busy="1"] i{background:var(--busy);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+#toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);max-width:min(440px,calc(100% - 32px));background:var(--ink);color:var(--stage);font:500 13px var(--body);padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#tip{position:fixed;z-index:15;pointer-events:none;background:var(--ink);color:var(--stage);font:500 12px var(--body);padding:5px 9px;border-radius:7px;opacity:0;transition:opacity .12s;white-space:nowrap}
+#drop{position:fixed;inset:0;z-index:18;display:none;align-items:center;justify-content:center;background:rgba(10,122,148,.28);border:3px dashed var(--accent);font:700 26px var(--display);color:var(--ink);pointer-events:none}
+#drop.on{display:flex}
+.fatal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font:600 16px var(--body)}
+select,input[type=number]{font:500 13px var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%;min-width:0}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:0;max-width:100%}
+.chip{font:500 13px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);white-space:nowrap}
+.chip[aria-pressed="false"]{color:var(--muted)}
+#recBadge{display:inline-flex;align-items:center;gap:7px;font:600 12px var(--mono);color:#fff;background:#d6303a;border-radius:8px;padding:9px 11px}
+#recBadge::before{content:"";width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1s infinite}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#recPlayer{width:100%;border-radius:8px;background:#000;aspect-ratio:16/9;display:block}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+#shootbar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:12;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);max-width:calc(100% - 32px)}
+body.shooting #shootbar{display:flex}
+body.shooting #panel,body.shooting #views{display:none}
+#shootbar i{width:9px;height:9px;border-radius:50%;background:#d6303a;animation:pulse 1s infinite;flex:none}
+#shootLabel{font:600 13px var(--body)}
+#shootTime{font:500 12px var(--mono);color:var(--muted)}
+#pbody{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.thumbs{overscroll-behavior:contain}
+button,.thumb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media (hover:none){#tip{display:none}}
+@media (pointer:coarse){
+  .btn{min-height:44px;padding:10px 16px;font-size:14px}
+  .btn.sm{min-height:40px;padding:8px 14px;font-size:13px}
+  .seg button{min-height:40px;padding:9px 14px;font-size:14px}
+  .chip{min-height:40px;padding:9px 14px}
+  select,input[type=number],input[type=text]{font-size:16px;min-height:44px;padding:9px 11px}
+  input[type=range]{min-height:34px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px}
+  .chk{min-height:40px;font-size:14px}
+  .chk input{width:20px;height:20px}
+  #pcollapse{padding:9px 14px;font-size:13px}
+  .thumbs{grid-template-columns:repeat(auto-fill,minmax(60px,1fr));max-height:30vh}
+}
+@media (max-width:760px){
+  :root{--bar:calc(62px + env(safe-area-inset-bottom,0px))}
+  #hud{padding-block:10px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  #top{flex-wrap:nowrap}
+  .brand{font-size:18px;padding:7px 11px}
+  .tools{flex-wrap:nowrap;gap:6px}
+  #views{position:fixed;left:0;right:0;bottom:0;z-index:14;display:grid;grid-template-columns:repeat(5,1fr);border-radius:0;border-width:1px 0 0;
+    padding:4px 6px calc(4px + env(safe-area-inset-bottom,0px));gap:2px;overflow:visible;max-width:none;background:var(--panel)}
+  #views button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:6px 0;font-size:11px;letter-spacing:.01em}
+  #views button svg{display:block;width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  #panel{position:fixed;left:0;right:0;bottom:var(--bar);width:auto;justify-self:stretch;align-self:end;max-height:55vh;max-height:min(55dvh,calc(100dvh - var(--bar) - 76px));
+    border-radius:16px 16px 0 0;border-bottom-width:0;box-shadow:0 -8px 24px rgba(0,0,0,.14)}
+  #pcollapse{display:block}
+  .phead{padding:10px 14px 6px;cursor:pointer;min-height:48px}
+  #pbody{padding:2px 14px 12px}
+  #toast{top:64px;bottom:auto;transform:translate(-50%,-14px)}
+  #toast.on{transform:translate(-50%,0)}
+  #shootbar{bottom:max(18px,env(safe-area-inset-bottom,0px));padding:8px 8px 8px 14px}
+  #shootbar .btn{min-height:44px;padding:0 20px}
+  #btnSound{padding:8px 11px}
+}
+@media (max-width:400px){
+  .grid2{grid-template-columns:1fr}
+  .brand{font-size:16px;padding:6px 9px}
+}
+@media (prefers-reduced-motion:reduce){#toast,#tip{transition:none}#statusbar[data-busy="1"] i,#shootbar i,#recBadge::before{animation:none}}
+</style>
+
+</head>
+<body>
+<div id="stage"></div>
+<div id="hud">
+  <header id="top">
+    <h1 class="brand">Print Room</h1>
+    <div class="tools">
+      <span id="recBadge" hidden>REC 0:00</span>
+      <button type="button" class="chip" id="btnSound" aria-pressed="true">Sound on</button>
+      <nav class="seg" id="views" aria-label="Camera views">
+        <button type="button" data-view="room" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M10 20v-6h4v6"/></svg><span>Room</span></button>
+        <button type="button" data-view="computer" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Computer</span></button>
+        <button type="button" data-view="printer" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6"/><path d="M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/></svg><span>Printer</span></button>
+        <button type="button" data-view="bundler" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span>Bundler</span></button>
+        <button type="button" data-view="studio" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3z"/></svg><span>Studio</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <aside id="panel" aria-label="Controls">
+    <div class="phead">
+      <span id="ptitle">Room</span>
+      <button type="button" id="pcollapse" aria-expanded="true">Hide</button>
+    </div>
+    <div id="pbody">
+
+      <section data-tab="room">
+        <p class="lead">Drag to look around, scroll to zoom. Click the computer, the printer or the bundler to move in close.</p>
+        <div class="flow"><span>Computer</span><i>&rarr;</i><span>Printer</span><i>&rarr;</i><span>Bundler</span></div>
+        <dl class="stats">
+          <dt>On screen</dt><dd id="rDoc">-</dd>
+          <dt>Sheets in tray</dt><dd id="rTray">0</dd>
+          <dt>Bundles in bin</dt><dd id="rBun">0</dd>
+        </dl>
+      </section>
+
+      <section data-tab="computer" hidden>
+        <div class="row">
+          <button type="button" class="btn primary" id="btnPdf">Open PDF</button>
+          <button type="button" class="btn" id="btnVideo">Open video</button>
+          <button type="button" class="btn" id="btnSample">Sample</button>
+        </div>
+        <input type="file" id="filePdf" accept="application/pdf,.pdf" hidden>
+        <input type="file" id="fileVideo" accept="video/*" hidden>
+        <p class="meta" id="srcInfo">Nothing open.</p>
+        <div id="docCtl" class="fld" style="gap:12px">
+          <div class="row">
+            <button type="button" class="btn" id="btnPlay">Pause scroll</button>
+            <label class="chk" for="chkLoop"><input type="checkbox" id="chkLoop" checked> Loop</label>
+          </div>
+          <label class="fld" for="speed"><span class="lab">Scroll speed <output id="speedOut">80 px/s</output></span><input type="range" id="speed" min="20" max="300" step="5" value="80"></label>
+          <label class="fld" for="pos"><span class="lab">Position <output id="posOut">Page 1</output></span><input type="range" id="pos" min="0" max="1000" value="0"></label>
+        </div>
+        <div id="vidCtl" class="fld" style="gap:12px" hidden>
+          <div class="row">
+            <button type="button" class="btn" id="vPlay">Pause</button>
+            <button type="button" class="btn" id="vMute">Mute</button>
+            <label class="chk" for="vLoop"><input type="checkbox" id="vLoop" checked> Loop</label>
+          </div>
+          <label class="fld" for="vSeek"><span class="lab">Seek <output id="vTime">0:00 / 0:00</output></span><input type="range" id="vSeek" min="0" max="1000" value="0"></label>
+        </div>
+        <button type="button" class="btn sm" id="btnClear" style="align-self:flex-start">Clear screen</button>
+      </section>
+
+      <section data-tab="printer" hidden>
+        <div class="fld"><span class="lab">Pages to print <output id="selOut">0 of 0</output></span>
+          <div class="thumbs" id="thumbs" role="group" aria-label="Pages"></div>
+        </div>
+        <div class="row">
+          <button type="button" class="btn sm" id="selAll">All</button>
+          <button type="button" class="btn sm" id="selNone">None</button>
+          <input type="text" id="range" placeholder="Range, e.g. 1-3, 5" aria-label="Page range" autocomplete="off" spellcheck="false">
+        </div>
+        <button type="button" class="btn primary wide" id="btnPrint">Print</button>
+        <p class="meta" id="printInfo">Pages land in the output tray, face up.</p>
+      </section>
+
+      <section data-tab="bundler" hidden>
+        <div class="seg stapleSeg" role="group" aria-label="Staple style">
+          <button type="button" data-staple="corner" aria-pressed="true">Corner</button>
+          <button type="button" data-staple="side" aria-pressed="false">Side, two</button>
+          <button type="button" data-staple="middle" aria-pressed="false">Middle, two</button>
+        </div>
+        <button type="button" class="btn primary wide" id="btnBundle">Collate and staple</button>
+        <button type="button" class="btn wide" id="btnInspect" disabled>Show the last bundle</button>
+        <p class="meta" id="bundleInfo">Nothing waiting in the printer tray.</p>
+        <ol class="outbox" id="outbox"></ol>
+      </section>
+
+      <section data-tab="studio" hidden>
+        <p class="lead">Set up a shoot and the camera crew does the rest: scroll, print, collate, staple, with changing angles and slow zooms.</p>
+        <div class="grid2">
+          <label class="fld" for="shPages"><span class="lab">Pages to scroll</span><input type="number" id="shPages" min="1" max="36" value="3"></label>
+          <label class="fld" for="shPrint"><span class="lab">Pages to print</span><input type="text" id="shPrint" value="1-3" autocomplete="off" spellcheck="false"></label>
+        </div>
+        <label class="fld" for="shSpeed"><span class="lab">Scroll speed <output id="shSpeedOut">200 px/s</output></span><input type="range" id="shSpeed" min="60" max="400" step="10" value="200"></label>
+        <div class="fld"><span class="lab">Staples</span>
+          <div class="seg stapleSeg" role="group" aria-label="Staple style">
+            <button type="button" data-staple="corner" aria-pressed="true">Corner</button>
+            <button type="button" data-staple="side" aria-pressed="false">Side, two</button>
+            <button type="button" data-staple="middle" aria-pressed="false">Middle, two</button>
+          </div>
+        </div>
+        <div class="grid2">
+          <label class="fld" for="shStyle"><span class="lab">Camera</span><select id="shStyle"><option value="fly">Smooth moves</option><option value="cut">Hard cuts</option></select></label>
+          <label class="fld" for="recO"><span class="lab">Frame</span><select id="recO"><option value="h">Horizontal 16:9</option><option value="v">Vertical 9:16</option><option value="s">Square 1:1</option></select></label>
+        </div>
+        <label class="fld" for="recQ"><span class="lab">Video size</span><select id="recQ"><option value="720">720p, smaller file</option><option value="1080">1080p, sharper</option></select></label>
+        <div class="row">
+          <label class="chk" for="shShake"><input type="checkbox" id="shShake" checked> Handheld motion</label>
+          <label class="chk" for="shRec"><input type="checkbox" id="shRec" checked> Record video</label>
+        </div>
+        <button type="button" class="btn primary wide" id="btnShoot">Start shoot</button>
+        <p class="meta" id="shEst"></p>
+        <hr>
+        <div class="row"><button type="button" class="btn" id="btnRec">Record what I do</button><span class="meta" id="recInfo"></span></div>
+        <div id="recResult" class="fld" style="gap:10px" hidden>
+          <video id="recPlayer" controls playsinline></video>
+          <div class="row"><button type="button" class="btn primary" id="btnSave">Save video</button><span class="meta" id="recMeta"></span></div>
+        </div>
+      </section>
+
+    </div>
+    <div id="statusbar" data-busy="0" role="status" aria-live="polite"><i></i><span id="statusText">Ready</span></div>
+  </aside>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="tip"></div>
+<div id="drop">Drop a PDF or a video</div>
+<div id="shootbar"><i></i><span id="shootLabel">Starting</span><span id="shootTime">0:00</span><button type="button" class="btn sm" id="btnStop">Stop</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+'use strict';
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!window.THREE || !THREE.OrbitControls) {
+  document.body.insertAdjacentHTML('beforeend', '<p class="fatal">The 3D engine could not be loaded. Check your connection and reload.</p>');
+  return;
+}
+
+/* ---------- constants ---------- */
+var PW = 640, PH = 905;            // page canvas size (A4 ratio)
+var MAXP = 36;                     // pages kept from a PDF
+var ST = 0.0011;                   // sheet thickness (metres)
+var A4 = { w: 0.21, l: 0.297 };    // default sheet size
+var MAXW = 0.31, MAXL = 0.34, MINS = 0.08;   // largest and smallest sheet the machines can take
+// real page size in PDF points (1/72 inch) -> sheet size in metres, kept inside what the machines can hold
+function dimsFromPts(wPt, hPt) {
+  var w = wPt / 72 * 0.0254, l = hPt / 72 * 0.0254;
+  var k = Math.min(1, MAXW / w, MAXL / l); w *= k; l *= k;
+  var m = Math.min(w, l);
+  if (m < MINS) { var u = Math.min(MINS / m, MAXW / w, MAXL / l); if (u > 1) { w *= u; l *= u; } }
+  return { w: w, l: l };
+}
+var DY = 0.78;                     // desk surface height
+var PRINTER = { x: 0.05, z: -1.85 };
+var BUNDLER = { x: 1.95, z: -1.55 };
+
+/* ---------- state ---------- */
+var state = {
+  doc: null, mode: 'idle', scrollY: 0, playing: true, speed: 80, loop: true, endHold: 0,
+  sel: new Set(), tray: [], bundles: [], busy: false, staple: 'corner', binH: 0, videoName: '', draggingPos: false
+};
+
+/* ---------- renderer ---------- */
+var stage = $('#stage');
+var COARSE = matchMedia('(pointer:coarse)').matches;
+function pixelRatio() { return Math.min(window.devicePixelRatio || 1, COARSE ? 1.5 : 2); }
+var renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+} catch (e) {
+  stage.insertAdjacentHTML('beforeend', '<p class="fatal">This browser could not start WebGL, which the 3D room needs.</p>');
+  return;
+}
+renderer.setPixelRatio(pixelRatio());
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.localClippingEnabled = true;
+stage.appendChild(renderer.domElement);
+renderer.domElement.setAttribute('aria-label', '3D room with a desk, computer, printer and bundling machine');
+
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(45, 1, 0.05, 60);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.45;
+controls.maxDistance = 9;
+controls.maxPolarAngle = Math.PI * 0.53;
+
+function applyTheme() {
+  var c = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#cdd6dd';
+  renderer.setClearColor(new THREE.Color(c));
+}
+applyTheme();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+/* ---------- helpers ---------- */
+function mat(color, o) { return new THREE.MeshStandardMaterial(Object.assign({ color: color, roughness: 0.75, metalness: 0 }, o || {})); }
+function put(parent, mesh, x, y, z) { mesh.position.set(x || 0, y || 0, z || 0); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh; }
+function box(parent, w, h, d, m, x, y, z) { return put(parent, new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m), x, y, z); }
+function cyl(parent, rt, rb, h, m, x, y, z, seg) { return put(parent, new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 28), m), x, y, z); }
+function rbox(parent, w, h, d, r, m, x, y, z) {
+  var s = new THREE.Shape(), hw = w / 2, hh = h / 2;
+  s.moveTo(-hw + r, -hh); s.lineTo(hw - r, -hh); s.quadraticCurveTo(hw, -hh, hw, -hh + r);
+  s.lineTo(hw, hh - r); s.quadraticCurveTo(hw, hh, hw - r, hh); s.lineTo(-hw + r, hh);
+  s.quadraticCurveTo(-hw, hh, -hw, hh - r); s.lineTo(-hw, -hh + r); s.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
+  var g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false, curveSegments: 6 });
+  g.translate(0, 0, -d / 2);
+  return put(parent, new THREE.Mesh(g, m), x, y, z);
+}
+function newCanvas(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function tex(c) { var t = new THREE.CanvasTexture(c); t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function rnd(a, b) { return a + Math.random() * (b - a); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+/* ---------- tweens ---------- */
+var tweens = [];
+var ease = {
+  io: function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; },
+  out: function (t) { return 1 - Math.pow(1 - t, 3); },
+  inn: function (t) { return t * t; },
+  lin: function (t) { return t; }
+};
+function tween(sec, fn, e) {
+  return new Promise(function (res) {
+    tweens.push({ t0: performance.now(), dur: Math.max(1, sec * 1000), fn: fn, e: e || ease.io, res: res });
+  });
+}
+function stepTweens(now) {
+  for (var i = tweens.length - 1; i >= 0; i--) {
+    var tw = tweens[i], u = clamp((now - tw.t0) / tw.dur, 0, 1);
+    tw.fn(tw.e(u), u);
+    if (u >= 1) { tweens.splice(i, 1); tw.res(); }
+  }
+}
+
+/* ---------- sound: everything is synthesised with Web Audio ---------- */
+var AU = { ctx: null, master: null, dest: null, noise: null, on: true, vol: 0.9 };
+var tickAcc = 0;
+function audioInit() {
+  if (AU.ctx) { if (AU.ctx.state === 'suspended') AU.ctx.resume(); return AU.ctx; }
+  var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+  try {
+    var ctx = new C(); AU.ctx = ctx;
+    AU.master = ctx.createGain(); AU.master.gain.value = AU.on ? AU.vol : 0;
+    var comp = ctx.createDynamicsCompressor(); AU.master.connect(comp); comp.connect(ctx.destination);
+    AU.dest = ctx.createMediaStreamDestination(); comp.connect(AU.dest);
+    var b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    AU.noise = b;
+    try { // the uploaded video keeps its own sound; it is not affected by the effects toggle
+      var vs = ctx.createMediaElementSource(video), vg = ctx.createGain();
+      vs.connect(vg); vg.connect(ctx.destination); vg.connect(AU.dest);
+    } catch (e) {}
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch (e) { AU.ctx = null; }
+  return AU.ctx;
+}
+function aOn() { return AU.ctx && AU.on && AU.ctx.state !== 'closed'; }
+function aEnv(g, t, a, peak, d) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+}
+function aNoise(o) {
+  if (!aOn()) return;
+  var c = AU.ctx, t = c.currentTime + (o.delay || 0), a = o.attack || 0.004;
+  var s = c.createBufferSource(); s.buffer = AU.noise; s.loop = true;
+  var f = c.createBiquadFilter(); f.type = o.type || 'bandpass'; f.Q.value = o.q || 1;
+  f.frequency.setValueAtTime(o.f0 || 1000, t);
+  if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + a + o.dur);
+  var g = c.createGain(); aEnv(g, t, a, o.gain || 0.3, o.dur);
+  s.connect(f); f.connect(g); g.connect(AU.master);
+  s.start(t, Math.random() * 1.5); s.stop(t + a + o.dur + 0.05);
+}
+function aTone(o) {
+  if (!aOn()) return;
+  var c = AU.ctx, t = c.currentTime + (o.delay || 0), a = o.attack || 0.004;
+  var s = c.createOscillator(); s.type = o.type || 'sine';
+  s.frequency.setValueAtTime(o.f0, t);
+  if (o.f1) s.frequency.exponentialRampToValueAtTime(o.f1, t + a + o.dur);
+  var g = c.createGain(); aEnv(g, t, a, o.gain || 0.2, o.dur);
+  s.connect(g); g.connect(AU.master); s.start(t); s.stop(t + a + o.dur + 0.05);
+}
+function aLoop(build) {
+  if (!aOn()) return { stop: function () {} };
+  var c = AU.ctx, t = c.currentTime, out = c.createGain();
+  out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(1, t + 0.2); out.connect(AU.master);
+  var nodes = build(c, out);
+  return { stop: function () {
+    var u = c.currentTime; out.gain.cancelScheduledValues(u);
+    out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), u); out.gain.exponentialRampToValueAtTime(0.0001, u + 0.25);
+    setTimeout(function () { nodes.forEach(function (n) { try { n.stop(); } catch (e) {} }); }, 450);
+  } };
+}
+function motorBuild(c, out) {
+  var o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 62;
+  var lfo = c.createOscillator(); lfo.frequency.value = 9; var lg = c.createGain(); lg.gain.value = 6; lfo.connect(lg); lg.connect(o.frequency);
+  var f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 380; var g = c.createGain(); g.gain.value = 0.1;
+  o.connect(f); f.connect(g); g.connect(out);
+  var n = c.createBufferSource(); n.buffer = AU.noise; n.loop = true;
+  var nf = c.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 0.8;
+  var ng = c.createGain(); ng.gain.value = 0.03; n.connect(nf); nf.connect(ng); ng.connect(out);
+  o.start(); lfo.start(); n.start(); return [o, lfo, n];
+}
+function inkBuild(c, out) {
+  var n = c.createBufferSource(); n.buffer = AU.noise; n.loop = true;
+  var f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 1.2;
+  var sw = c.createOscillator(); sw.frequency.value = 5; var sg2 = c.createGain(); sg2.gain.value = 900; sw.connect(sg2); sg2.connect(f.frequency);
+  var g = c.createGain(); g.gain.value = 0.05;
+  var am = c.createOscillator(); am.frequency.value = 34; var ag = c.createGain(); ag.gain.value = 0.04; am.connect(ag); ag.connect(g.gain);
+  n.connect(f); f.connect(g); g.connect(out); n.start(); sw.start(); am.start(); return [n, sw, am];
+}
+var SFX = {
+  click: function () { aTone({ type: 'square', f0: 1900, f1: 1100, dur: 0.03, gain: 0.03 }); },
+  tick: function () { aNoise({ type: 'bandpass', f0: 3600, q: 2, dur: 0.012, gain: 0.05 }); },
+  ding: function () { aTone({ f0: 880, dur: 0.3, gain: 0.1 }); aTone({ f0: 1320, dur: 0.45, gain: 0.08, delay: 0.09 }); },
+  beep: function () { aTone({ f0: 1320, dur: 0.08, gain: 0.09 }); aTone({ f0: 1320, dur: 0.08, gain: 0.09, delay: 0.14 }); },
+  slap: function (g, d) { g = g || 1; aNoise({ type: 'lowpass', f0: 1400, f1: 300, q: 0.7, dur: 0.09, gain: 0.3 * g, delay: d }); aTone({ f0: 150, f1: 70, dur: 0.07, gain: 0.16 * g, delay: d }); },
+  whoosh: function (dur, f0, f1, g, d) { aNoise({ type: 'bandpass', f0: f0, f1: f1, q: 0.8, dur: dur, gain: g || 0.15, attack: dur * 0.35, delay: d }); },
+  scrape: function (dur, f0, f1, g, d) { aNoise({ type: 'bandpass', f0: f0, f1: f1, q: 0.6, dur: dur, gain: g || 0.12, attack: Math.min(0.12, dur * 0.3), delay: d }); },
+  rattle: function (dur, n) { for (var i = 0; i < n; i++) aNoise({ type: 'bandpass', f0: rnd(2000, 3500), q: 3, dur: 0.02, gain: rnd(0.1, 0.22), delay: rnd(0, dur) }); },
+  flutter: function (n, d, g) { for (var i = 0; i < n; i++) aNoise({ type: 'bandpass', f0: rnd(1800, 3200), q: 2, dur: 0.025, gain: (g || 0.12) * rnd(0.5, 1), delay: (d || 0) + rnd(0, 0.16) }); },
+  servo: function (dur, f0, f1, g, d) { aTone({ type: 'sawtooth', f0: f0, f1: f1, dur: dur, gain: (g || 0.4) * 0.05, delay: d, attack: 0.04 }); },
+  thud: function (g, d) { g = g || 1; aTone({ f0: 120, f1: 45, dur: 0.2, gain: 0.45 * g, delay: d }); aNoise({ type: 'lowpass', f0: 600, f1: 150, dur: 0.15, gain: 0.3 * g, delay: d }); },
+  staple: function () {
+    aNoise({ type: 'highpass', f0: 2500, dur: 0.05, gain: 0.45 }); aTone({ type: 'square', f0: 200, f1: 60, dur: 0.12, gain: 0.16 });
+    aNoise({ type: 'highpass', f0: 4500, dur: 0.03, gain: 0.3, delay: 0.07 });
+  },
+  motor: function () { return aLoop(motorBuild); },
+  inkjet: function () { return aLoop(inkBuild); }
+};
+
+/* ---------- lights ---------- */
+scene.add(new THREE.HemisphereLight(0xeaf2f8, 0x8d7355, 0.62));
+var sun = new THREE.DirectionalLight(0xfff3e2, 0.78);
+sun.position.set(-3.4, 4.4, 3.2);
+sun.target.position.set(0.2, 0.6, -1.4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(COARSE ? 1024 : 2048, COARSE ? 1024 : 2048);
+sun.shadow.camera.left = -4; sun.shadow.camera.right = 4; sun.shadow.camera.top = 4; sun.shadow.camera.bottom = -4;
+sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 14;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun); scene.add(sun.target);
+var screenGlow = new THREE.PointLight(0x9fd2ff, 0.4, 2.2);
+screenGlow.position.set(-1.5, 1.35, -1.3);
+scene.add(screenGlow);
+
+/* ---------- materials ---------- */
+var M = {
+  wall: mat(0xd9dfe4, { roughness: 0.95 }), wall2: mat(0xcdd5dc, { roughness: 0.95 }), trim: mat(0xf0f2f3, { roughness: 0.6 }),
+  birch: mat(0xd8bb90, { roughness: 0.6 }), steel: mat(0x2a3138, { roughness: 0.5, metalness: 0.35 }),
+  white: mat(0xeceff1, { roughness: 0.5 }), grey: mat(0xa9b3bb, { roughness: 0.5 }), dark: mat(0x1b2025, { roughness: 0.55 }),
+  slate: mat(0x3a4651, { roughness: 0.55, metalness: 0.15 }), yellow: mat(0xefa800, { roughness: 0.5 }),
+  chrome: mat(0xcfd6dc, { roughness: 0.3, metalness: 0.85 }), cyan: mat(0x0a9db8, { roughness: 0.5 })
+};
+
+/* ---------- room ---------- */
+function plankTex() {
+  var c = newCanvas(512, 512), g = c.getContext('2d'), pw = 64;
+  for (var i = 0; i < 8; i++) {
+    var v = Math.floor(rnd(-12, 12));
+    g.fillStyle = 'rgb(' + (184 + v) + ',' + (138 + v) + ',' + (92 + v) + ')';
+    g.fillRect(i * pw, 0, pw, 512);
+    for (var k = 0; k < 26; k++) {
+      var y = Math.random() * 512;
+      g.strokeStyle = 'rgba(80,50,25,.13)'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(i * pw + 2, y); g.lineTo(i * pw + pw - 2, y + rnd(-3, 3)); g.stroke();
+    }
+    g.fillStyle = 'rgba(55,32,14,.4)'; g.fillRect(i * pw, 0, 2, 512);
+    var sy = Math.random() * 512; g.fillRect(i * pw, sy, pw, 2);
+  }
+  var t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 3);
+  t.anisotropy = 8;
+  return t;
+}
+var floor = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 6), new THREE.MeshStandardMaterial({ map: plankTex(), roughness: 0.8 }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, 0.8); floor.receiveShadow = true; scene.add(floor);
+
+var back = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 3.2), M.wall); back.position.set(0, 1.6, -2.2); back.receiveShadow = true; scene.add(back);
+var leftW = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.2), M.wall2); leftW.rotation.y = Math.PI / 2; leftW.position.set(-4.2, 1.6, 0.8); leftW.receiveShadow = true; scene.add(leftW);
+var rightW = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.2), M.wall2); rightW.rotation.y = -Math.PI / 2; rightW.position.set(4.2, 1.6, 0.8); rightW.receiveShadow = true; scene.add(rightW);
+box(scene, 8.4, 0.1, 0.02, M.trim, 0, 0.05, -2.19);
+box(scene, 0.02, 0.1, 6, M.trim, -4.19, 0.05, 0.8);
+box(scene, 0.02, 0.1, 6, M.trim, 4.19, 0.05, 0.8);
+
+// window on the left wall
+(function () {
+  var g = newCanvas(8, 256), x = g.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#bfe1f7'); gr.addColorStop(1, '#f4f9fc'); x.fillStyle = gr; x.fillRect(0, 0, 8, 256);
+  var w = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(g) }));
+  w.rotation.y = Math.PI / 2; w.position.set(-4.19, 1.7, -0.3); scene.add(w);
+  box(scene, 0.05, 0.06, 1.9, M.trim, -4.17, 2.42, -0.3); box(scene, 0.05, 0.06, 1.9, M.trim, -4.17, 0.98, -0.3);
+  box(scene, 0.05, 1.4, 0.06, M.trim, -4.17, 1.7, -1.2); box(scene, 0.05, 1.4, 0.06, M.trim, -4.17, 1.7, 0.6);
+  box(scene, 0.05, 1.4, 0.04, M.trim, -4.17, 1.7, -0.3); box(scene, 0.05, 0.04, 1.8, M.trim, -4.17, 1.7, -0.3);
+})();
+
+// poster, shelf, clock
+(function () {
+  var c = newCanvas(300, 420), g = c.getContext('2d');
+  g.fillStyle = '#f2efe8'; g.fillRect(0, 0, 300, 420);
+  g.fillStyle = '#0a7a94'; g.beginPath(); g.arc(150, 170, 100, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#efa800'; g.fillRect(40, 300, 220, 14);
+  g.fillStyle = '#2a3138'; g.fillRect(40, 330, 140, 8); g.fillRect(40, 350, 90, 8);
+  g.fillStyle = '#f2efe8'; g.beginPath(); g.arc(190, 130, 46, 0, Math.PI * 2); g.fill();
+  var p = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(c), roughness: 0.9 }));
+  p.position.set(0.55, 1.85, -2.185); scene.add(p);
+  box(scene, 0.53, 0.73, 0.012, M.dark, 0.55, 1.85, -2.195);
+  box(scene, 1.6, 0.04, 0.22, M.birch, -1.6, 2.05, -2.08);
+  var cols = [0x0a7a94, 0xefa800, 0x2a3138, 0xc8553d, 0x6b8f71, 0x3d5a80, 0xe0d8c8];
+  var bx = -2.3;
+  for (var i = 0; i < 12; i++) {
+    var bw = rnd(0.035, 0.06), bh = rnd(0.18, 0.3);
+    box(scene, bw, bh, 0.16, mat(cols[i % cols.length], { roughness: 0.8 }), bx + bw / 2, 2.07 + bh / 2, -2.08);
+    bx += bw + 0.004;
+  }
+  var cl = newCanvas(256, 256), cg = cl.getContext('2d');
+  cg.fillStyle = '#f6f6f2'; cg.beginPath(); cg.arc(128, 128, 124, 0, 7); cg.fill();
+  cg.strokeStyle = '#2a3138'; cg.lineWidth = 6;
+  for (var h = 0; h < 12; h++) { var a = h * Math.PI / 6; cg.beginPath(); cg.moveTo(128 + Math.sin(a) * 100, 128 - Math.cos(a) * 100); cg.lineTo(128 + Math.sin(a) * 116, 128 - Math.cos(a) * 116); cg.stroke(); }
+  cg.lineWidth = 8; cg.beginPath(); cg.moveTo(128, 128); cg.lineTo(128 + Math.sin(0.9) * 60, 128 - Math.cos(0.9) * 60); cg.stroke();
+  cg.lineWidth = 5; cg.beginPath(); cg.moveTo(128, 128); cg.lineTo(128 + Math.sin(3.1) * 90, 128 - Math.cos(3.1) * 90); cg.stroke();
+  var cm = new THREE.Mesh(new THREE.CircleGeometry(0.17, 40), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cl), roughness: 0.6 }));
+  cm.position.set(1.55, 2.3, -2.18); scene.add(cm);
+})();
+
+// rug, plant
+var rug = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.1), mat(0x36566a, { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(-0.7, 0.004, -0.75); rug.receiveShadow = true; scene.add(rug);
+var rug2 = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.9), mat(0x44687e, { roughness: 1 })); rug2.rotation.x = -Math.PI / 2; rug2.position.set(-0.7, 0.006, -0.75); rug2.receiveShadow = true; scene.add(rug2);
+(function () {
+  var g = new THREE.Group(); g.position.set(3.55, 0, -1.7); scene.add(g);
+  cyl(g, 0.17, 0.13, 0.34, mat(0xe7e1d6, { roughness: 0.7 }), 0, 0.17, 0, 28);
+  cyl(g, 0.16, 0.16, 0.02, mat(0x4a3a2c, { roughness: 1 }), 0, 0.33, 0, 20);
+  for (var i = 0; i < 9; i++) {
+    var a = i / 9 * Math.PI * 2, leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), mat(i % 2 ? 0x3f7d4f : 0x58975f, { roughness: 0.7 }));
+    leaf.scale.set(0.45, 1.5, 0.22); leaf.castShadow = true;
+    leaf.position.set(Math.sin(a) * 0.1, 0.62 + (i % 3) * 0.09, Math.cos(a) * 0.1);
+    leaf.rotation.set(Math.cos(a) * 0.5, a, -Math.sin(a) * 0.5);
+    g.add(leaf);
+  }
+})();
+
+/* ---------- desk and chair ---------- */
+var deskX = -0.9, deskZ = -1.65;
+var deskG = new THREE.Group(); scene.add(deskG);
+box(deskG, 3.4, 0.045, 0.9, M.birch, deskX, DY - 0.0225, deskZ);
+box(deskG, 0.045, 0.735, 0.82, M.steel, deskX - 1.68, 0.3675, deskZ);
+box(deskG, 0.045, 0.735, 0.82, M.steel, deskX + 1.68, 0.3675, deskZ);
+box(deskG, 3.3, 0.3, 0.02, M.steel, deskX, 0.6, deskZ - 0.38);
+(function () { // chair
+  var g = new THREE.Group(); g.position.set(-1.5, 0, -0.78); g.rotation.y = 0.18; scene.add(g);
+  var cm = mat(0x2d3a45, { roughness: 0.9 });
+  rbox(g, 0.5, 0.07, 0.5, 0.03, cm, 0, 0.5, 0).rotation.x = Math.PI / 2;
+  g.children[g.children.length - 1].rotation.x = 0;
+  box(g, 0.48, 0.5, 0.06, cm, 0, 0.82, 0.24).rotation.x = -0.08;
+  cyl(g, 0.025, 0.025, 0.4, M.steel, 0, 0.27, 0, 12);
+  for (var i = 0; i < 5; i++) {
+    var a = i / 5 * Math.PI * 2, leg = box(g, 0.3, 0.025, 0.04, M.steel, Math.sin(a) * 0.15, 0.06, Math.cos(a) * 0.15);
+    leg.rotation.y = a - Math.PI / 2;
+    var w = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), M.dark); w.position.set(Math.sin(a) * 0.3, 0.03, Math.cos(a) * 0.3); w.castShadow = true; g.add(w);
+  }
+})();
+
+/* ---------- computer ---------- */
+var computerG = new THREE.Group(); scene.add(computerG);
+var MON = { x: -1.5, z: -1.82 };
+var screenCv = newCanvas(1280, 720), sg = screenCv.getContext('2d');
+var screenTex = tex(screenCv);
+(function () {
+  var g = new THREE.Group(); g.position.set(MON.x, DY, MON.z); computerG.add(g);
+  cyl(g, 0.14, 0.15, 0.015, M.steel, 0, 0.0075, 0.02, 32);
+  box(g, 0.05, 0.22, 0.03, M.steel, 0, 0.12, -0.02);
+  rbox(g, 0.98, 0.58, 0.05, 0.02, M.dark, 0, 0.5, -0.01);
+  var scr = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.5175), new THREE.MeshBasicMaterial({ map: screenTex }));
+  scr.position.set(0, 0.5, 0.0155); g.add(scr);
+  box(g, 0.02, 0.012, 0.004, M.grey, 0, 0.222, 0.016);
+  // keyboard
+  var kc = newCanvas(512, 176), kg = kc.getContext('2d');
+  kg.fillStyle = '#d9dee2'; kg.fillRect(0, 0, 512, 176);
+  for (var r = 0; r < 5; r++) {
+    var n = r === 4 ? 1 : 13 + (r % 2), kw = r === 4 ? 300 : 30;
+    var startX = r === 4 ? 100 : 16 + (r % 2) * 8;
+    for (var k = 0; k < n; k++) {
+      kg.fillStyle = '#f7f8f9'; kg.strokeStyle = '#aab3ba'; kg.lineWidth = 2;
+      kg.fillRect(startX + k * (kw + 7), 12 + r * 31, kw, 25); kg.strokeRect(startX + k * (kw + 7), 12 + r * 31, kw, 25);
+    }
+  }
+  var kb = new THREE.Group(); kb.position.set(MON.x, DY, -1.4); computerG.add(kb);
+  box(kb, 0.46, 0.018, 0.158, M.white, 0, 0.009, 0);
+  var kt = new THREE.Mesh(new THREE.PlaneGeometry(0.44, 0.151), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(kc), roughness: 0.6 }));
+  kt.rotation.x = -Math.PI / 2; kt.position.set(0, 0.0185, 0); kb.add(kt);
+  box(computerG, 0.26, 0.004, 0.22, mat(0x39454f, { roughness: 1 }), MON.x + 0.42, DY + 0.002, -1.4);
+  var ms = new THREE.Mesh(new THREE.SphereGeometry(0.03, 18, 12), M.white); ms.scale.set(0.9, 0.5, 1.5); ms.position.set(MON.x + 0.42, DY + 0.016, -1.4); ms.castShadow = true; computerG.add(ms);
+  // tower under desk
+  box(computerG, 0.2, 0.44, 0.45, M.dark, -2.4, 0.22, -1.75);
+  box(computerG, 0.012, 0.012, 0.004, M.cyan, -2.4, 0.38, -1.52);
+})();
+// lamp and mug
+(function () {
+  var g = new THREE.Group(); g.position.set(-2.4, DY, -1.95); scene.add(g);
+  cyl(g, 0.08, 0.09, 0.02, M.dark, 0, 0.01, 0, 24);
+  var a1 = box(g, 0.018, 0.34, 0.018, M.dark, 0, 0.18, 0); a1.rotation.z = 0.25;
+  var a2 = box(g, 0.018, 0.3, 0.018, M.dark, 0.1, 0.4, 0); a2.rotation.z = -1.1;
+  var head = cyl(g, 0.02, 0.07, 0.1, M.yellow, 0.24, 0.43, 0, 20); head.rotation.z = -0.6;
+  var mug = cyl(scene, 0.04, 0.036, 0.09, mat(0xf3f1ec, { roughness: 0.4 }), -0.55, DY + 0.045, -1.42, 24);
+  var h = new THREE.Mesh(new THREE.TorusGeometry(0.025, 0.007, 8, 16), mat(0xf3f1ec)); h.position.set(-0.505, DY + 0.045, -1.42); h.castShadow = true; scene.add(h);
+  box(scene, 0.22, 0.05, 0.31, mat(0xffffff, { roughness: 0.9 }), -0.1, DY + 0.025, -1.95); // paper ream
+  box(scene, 0.215, 0.002, 0.305, M.cyan, -0.1, DY + 0.051, -1.95);
+})();
+
+/* ---------- printer ---------- */
+var printerG = new THREE.Group(); printerG.position.set(PRINTER.x, DY, PRINTER.z); scene.add(printerG);
+var clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -(PRINTER.z + 0.22));
+var rackReam, rackGL, rackGR;
+var TRAY_Y = DY + 0.059;
+rbox(printerG, 0.62, 0.22, 0.44, 0.03, M.white, 0, 0.11, 0);
+rbox(printerG, 0.6, 0.05, 0.42, 0.02, mat(0xd5dade, { roughness: 0.45 }), 0, 0.245, 0);
+box(printerG, 0.5, 0.004, 0.3, mat(0x1f2a33, { roughness: 0.2, metalness: 0.3 }), 0, 0.272, 0.01);
+box(printerG, 0.5, 0.024, 0.002, M.dark, 0, 0.066, 0.2205);       // output slot
+box(printerG, 0.5, 0.008, 0.34, M.grey, 0, 0.055, 0.39);           // output tray
+box(printerG, 0.006, 0.02, 0.34, M.grey, -0.255, 0.065, 0.39);
+box(printerG, 0.006, 0.02, 0.34, M.grey, 0.255, 0.065, 0.39);
+box(printerG, 0.51, 0.02, 0.006, M.grey, 0, 0.065, 0.56);
+(function () { // feed rack
+  var f = new THREE.Group(); f.position.set(0, 0.27, -0.1); f.rotation.x = 1.1; printerG.add(f);
+  box(f, 0.4, 0.006, 0.44, mat(0x4d5963, { roughness: 0.6 }), 0, 0, -0.22);
+  cyl(printerG, 0.012, 0.012, 0.26, M.grey, 0, 0.268, -0.1, 16).rotation.z = Math.PI / 2;   // pickup roller
+  rackReam = box(f, 1, 0.022, 1, mat(0xffffff, { roughness: 0.9 }), 0, 0.014, -0.2);
+  rackGL = box(f, 0.004, 0.03, 0.2, M.grey, -0.12, 0.015, -0.2); rackGR = box(f, 0.004, 0.03, 0.2, M.grey, 0.12, 0.015, -0.2);
+})();
+// the blank paper in the rack always has the size of the page about to be printed
+function setRack(dim) {
+  rackReam.scale.set(dim.w, 1, dim.l); rackReam.position.z = -(dim.l / 2 + 0.05);
+  rackGL.position.set(-(dim.w / 2 + 0.012), 0.015, -(dim.l / 2 + 0.05)); rackGR.position.set(dim.w / 2 + 0.012, 0.015, -(dim.l / 2 + 0.05));
+}
+var pLcd = { cv: newCanvas(256, 96) }; pLcd.g = pLcd.cv.getContext('2d'); pLcd.tex = new THREE.CanvasTexture(pLcd.cv);
+var pLcdMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: pLcd.tex })); pLcdMesh.position.set(0.17, 0.175, 0.2215); printerG.add(pLcdMesh);
+var pLed = new THREE.Mesh(new THREE.SphereGeometry(0.008, 12, 8), new THREE.MeshBasicMaterial({ color: 0x2bd47a })); pLed.position.set(0.27, 0.205, 0.2215); printerG.add(pLed);
+box(printerG, 0.1, 0.012, 0.002, M.cyan, -0.2, 0.185, 0.2215);
+box(printerG, 0.34, 0.002, 0.014, M.dark, 0, 0.2705, -0.1);     // paper entry slot on the lid
+
+/* ---------- bundler ---------- */
+var bundlerG = new THREE.Group(); bundlerG.position.set(BUNDLER.x, 0, BUNDLER.z); scene.add(bundlerG);
+var STACK0 = new THREE.Vector3(-0.05, 0.912, 0.07);
+var BIN_FLOOR = 0.4;
+rbox(bundlerG, 0.8, 0.9, 0.62, 0.03, M.slate, 0, 0.45, 0);
+box(bundlerG, 0.82, 0.02, 0.64, M.dark, 0, 0.9, 0);
+box(bundlerG, 0.34, 0.012, 0.42, M.chrome, STACK0.x, 0.906, STACK0.z);                  // collating deck
+box(bundlerG, 0.006, 0.03, 0.42, M.yellow, STACK0.x - 0.19, 0.93, STACK0.z);             // left fence
+box(bundlerG, 0.34, 0.03, 0.006, M.yellow, STACK0.x, 0.93, STACK0.z - 0.213);            // back fence
+box(bundlerG, 0.7, 0.5, 0.12, M.slate, 0, 1.15, -0.25);                                 // tower
+box(bundlerG, 0.7, 0.035, 0.03, M.chrome, 0, 1.25, -0.175);                             // rail
+box(bundlerG, 0.4, 0.05, 0.002, M.yellow, 0, 1.05, -0.189);
+(function () { // chute and bin
+  var ch = box(bundlerG, 0.34, 0.008, 0.242, M.chrome, STACK0.x, 0.826, 0.365); ch.rotation.x = 0.79;
+  box(bundlerG, 0.36, 0.02, 0.46, M.slate, STACK0.x, BIN_FLOOR, 0.555);
+  box(bundlerG, 0.01, 0.16, 0.46, M.yellow, STACK0.x - 0.175, BIN_FLOOR + 0.08, 0.555);
+  box(bundlerG, 0.01, 0.16, 0.46, M.yellow, STACK0.x + 0.175, BIN_FLOOR + 0.08, 0.555);
+  box(bundlerG, 0.36, 0.16, 0.01, M.yellow, STACK0.x, BIN_FLOOR + 0.08, 0.78);
+  cyl(bundlerG, 0.02, 0.02, BIN_FLOOR, M.steel, STACK0.x - 0.15, BIN_FLOOR / 2, 0.76, 12);
+  cyl(bundlerG, 0.02, 0.02, BIN_FLOOR, M.steel, STACK0.x + 0.15, BIN_FLOOR / 2, 0.76, 12);
+})();
+var bLcd = { cv: newCanvas(256, 128) }; bLcd.g = bLcd.cv.getContext('2d'); bLcd.tex = new THREE.CanvasTexture(bLcd.cv);
+var bLcdMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.075), new THREE.MeshBasicMaterial({ map: bLcd.tex })); bLcdMesh.position.set(-0.31, 0.74, 0.312); bundlerG.add(bLcdMesh);
+box(bundlerG, 0.16, 0.085, 0.004, M.dark, -0.31, 0.74, 0.31);
+[-0.35, -0.31, -0.27].forEach(function (x, i) { cyl(bundlerG, 0.012, 0.012, 0.01, i === 2 ? M.yellow : M.grey, x, 0.66, 0.315, 14).rotation.x = Math.PI / 2; });
+// stapler gantry
+var carriage = new THREE.Group(); carriage.position.set(0.28, 1.25, -0.15); bundlerG.add(carriage);
+box(carriage, 0.09, 0.07, 0.05, M.yellow, 0, 0, 0);
+var armGeo = new THREE.BoxGeometry(0.045, 0.035, 1); armGeo.translate(0, 0, 0.5);
+var arm = new THREE.Mesh(armGeo, M.chrome); arm.castShadow = true; arm.scale.z = 0.02; carriage.add(arm);
+var headG = new THREE.Group(); headG.position.z = 0.02; carriage.add(headG);
+box(headG, 0.07, 0.06, 0.09, M.yellow, 0, -0.03, 0);
+var ramGeo = new THREE.BoxGeometry(0.03, 1, 0.03); ramGeo.translate(0, -0.5, 0);
+var ram = new THREE.Mesh(ramGeo, M.chrome); ram.castShadow = true; headG.add(ram); ram.position.y = -0.06;
+var pad = box(headG, 0.07, 0.02, 0.07, M.dark, 0, -0.12, 0);
+var L0 = 0.06;
+function setRam(L) { ram.scale.y = L; pad.position.y = -0.06 - L; }
+setRam(L0);
+function moveHead(x, reach, sec) {
+  SFX.servo(sec, 300, 520, 0.35);
+  var x0 = carriage.position.x, r0 = headG.position.z;
+  return tween(sec, function (e) {
+    carriage.position.x = x0 + (x - x0) * e;
+    var r = r0 + (reach - r0) * e; headG.position.z = r; arm.scale.z = Math.max(0.02, r);
+  });
+}
+
+/* ---------- LCDs ---------- */
+function lcd(t, lines, color, bg) {
+  var g = t.g, w = t.cv.width, h = t.cv.height;
+  g.fillStyle = bg || '#0b1a14'; g.fillRect(0, 0, w, h);
+  var fs = Math.min(26, Math.floor(h / (lines.length + 0.7)));
+  g.fillStyle = color || '#7dffb0'; g.font = '700 ' + fs + 'px "Courier New",monospace'; g.textBaseline = 'middle';
+  lines.forEach(function (s, i) { g.fillText(s, 12, (i + 1) * (h / (lines.length + 1))); });
+  t.tex.needsUpdate = true;
+}
+function printerLcd(lines, c) { lcd(pLcd, lines, c); }
+function bundlerLcd(lines, c) { lcd(bLcd, lines, c); }
+printerLcd(['READY', 'TRAY EMPTY']);
+bundlerLcd(['READY', 'NO SHEETS']);
+setRack(A4);
+
+/* ---------- sheets ---------- */
+function makeSheet(pageCanvas, pageIdx, dim) {
+  dim = dim || A4;
+  var asp = dim.l / dim.w, W = asp >= 1 ? Math.round(720 / asp) : 720, H = asp >= 1 ? 720 : Math.round(720 * asp);
+  var cv = newCanvas(W, H), g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  var t = new THREE.CanvasTexture(cv); t.anisotropy = 4;
+  // Each sheet has its own clip plane. It starts far away (no clipping) so the blank sheet is visible
+  // on the paper rack, and moves to the printer's front face once the sheet is inside the printer.
+  var cp = new THREE.Plane(new THREE.Vector3(0, 0, 1), 100);
+  var top = new THREE.MeshStandardMaterial({ map: t, roughness: 0.92, clippingPlanes: [cp] });
+  var edge = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.95, clippingPlanes: [cp] });
+  var mesh = new THREE.Mesh(new THREE.BoxGeometry(dim.w, ST, dim.l), [edge, edge, top, edge, edge, edge]);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  var group = new THREE.Group(); group.add(mesh);
+  var api = {
+    group: group, page: pageIdx, dim: dim, landing: null, rot: 0, cp: cp,
+    reveal: function (f) {
+      f = clamp(f, 0, 1);
+      g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+      if (f > 0) { var sh = pageCanvas.height * f; g.drawImage(pageCanvas, 0, pageCanvas.height - sh, pageCanvas.width, sh, 0, H - H * f, W, H * f); }
+      if (f >= 1) { g.fillStyle = 'rgba(90,100,110,.8)'; g.font = '15px Helvetica,Arial,sans-serif'; g.textAlign = 'right'; g.fillText('PRINT ROOM  p.' + (pageIdx + 1), W - 14, 22); g.textAlign = 'left'; }
+      t.needsUpdate = true;
+    },
+    free: function () { top.clippingPlanes = []; edge.clippingPlanes = []; top.needsUpdate = true; edge.needsUpdate = true; }
+  };
+  return api;
+}
+function settleTray() {
+  state.tray.forEach(function (s, k) { s.group.position.y = TRAY_Y + ST / 2 + k * ST; });
+}
+
+// Centre of a sheet lying on top of the paper stack in the rear rack, slid zl metres along the rack.
+// The rack hinges on the lid at (PRINTER.x, DY + 0.27, PRINTER.z - 0.1) and leans back at 1.1 rad.
+var RACK_TILT = 1.1;
+function rackPose(x, zl) {
+  var y = 0.025 + ST / 2, s = Math.sin(RACK_TILT), c = Math.cos(RACK_TILT);
+  return new THREE.Vector3(x, DY + 0.27 + y * c - zl * s, PRINTER.z - 0.1 + y * s + zl * c);
+}
+
+async function printSheet(page, idx, dur, onPrint, dim) {
+  dim = dim || A4; var SL = dim.l;
+  setRack(dim);
+  var sh = makeSheet(page, idx, dim);
+  state.curSheet = sh.group;
+  var zSlot = PRINTER.z + 0.22;
+  var z0 = zSlot - SL / 2 - 0.03, z1 = zSlot + SL / 2 - 0.035;
+  var x = PRINTER.x + rnd(-0.01, 0.01), yaw = rnd(-0.03, 0.03);
+  var A = rackPose(x, -(SL / 2 + 0.05)), B = rackPose(x, SL / 2 + 0.01);
+  var C = new THREE.Vector3(x, TRAY_Y + ST / 2 + state.tray.length * ST, z0);
+  var f1 = dur >= 1.4 ? 0.8 : 0.35, f2 = dur >= 1.4 ? 0.3 : 0.15;
+  // 1. a blank sheet is pulled off the stack and slides down the rack into the printer
+  sh.group.position.copy(A); sh.group.rotation.x = RACK_TILT;
+  scene.add(sh.group);
+  SFX.scrape(f1 + f2, 1100, 2400, 0.16);
+  await tween(f1, function (e) { sh.group.position.lerpVectors(A, B, e); }, ease.inn);
+  // 2. inside the printer it turns flat and lines up with the output slot
+  await tween(f2, function (e) {
+    sh.group.position.lerpVectors(B, C, e);
+    sh.group.rotation.x = RACK_TILT * (1 - e);
+  });
+  sh.group.rotation.x = 0;
+  sh.cp.constant = -zSlot;
+  if (onPrint) onPrint();
+  // 3. it is printed as it comes out of the slot
+  var ink = SFX.inkjet();
+  await tween(dur, function (e) {
+    var z = z0 + (z1 - z0) * e;
+    sh.group.position.z = z;
+    sh.reveal((z + SL / 2 - zSlot) / SL);
+  }, ease.lin);
+  ink.stop(); SFX.slap(0.7);
+  sh.reveal(1);
+  await tween(0.18, function (e) { sh.group.rotation.y = yaw * e; sh.group.position.z = z1 + 0.012 * e; });
+  state.tray.push(sh);
+  refresh();
+}
+
+async function doPrint() {
+  if (state.busy || !state.doc) return;
+  var doc = state.doc;
+  var list = Array.from(state.sel).sort(function (a, b) { return a - b; }).filter(function (i) { return doc.pages[i]; });
+  if (!list.length) { toast('Select at least one page to print.'); return; }
+  state.busy = true; refresh(); peekAction();
+  var per = list.length <= 8 ? 1.5 : list.length <= 20 ? 0.9 : 0.55;
+  var motor = SFX.motor(); setPhase('print:start');
+  for (var k = 0; k < list.length; k++) {
+    setStatus('Feeding paper for page ' + (list[k] + 1) + ' (' + (k + 1) + ' of ' + list.length + ')', true);
+    printerLcd(['FEEDING', (k + 1) + ' / ' + list.length, 'PAGE ' + (list[k] + 1)], '#ffd36b');
+    pLed.material.color.set(0xffb020);
+    await printSheet(doc.pages[list[k]], list[k], per, (function (k) {
+      return function () {
+        if (k === 0) setPhase('print:first-out');
+        setStatus('Printing page ' + (list[k] + 1) + ' (' + (k + 1) + ' of ' + list.length + ')', true);
+        printerLcd(['PRINTING', (k + 1) + ' / ' + list.length, 'PAGE ' + (list[k] + 1)], '#ffd36b');
+      };
+    })(k), doc.dims[list[k]]);
+  }
+  pLed.material.color.set(0x2bd47a);
+  motor.stop(); SFX.beep(); setPhase('print:done');
+  printerLcd(['DONE', state.tray.length + ' SHEETS', 'IN TRAY']);
+  state.busy = false;
+  setStatus('Ready');
+  refresh();
+  toast(list.length + (list.length === 1 ? ' page is' : ' pages are') + ' in the output tray.');
+}
+
+/* ---------- bundling ---------- */
+function rangeText(nums) {
+  var a = nums.slice().sort(function (x, y) { return x - y; }), out = [], i = 0;
+  while (i < a.length) {
+    var j = i; while (j + 1 < a.length && a[j + 1] === a[j] + 1) j++;
+    out.push(j > i ? a[i] + '-' + a[j] : '' + a[i]); i = j + 1;
+  }
+  return out.join(', ');
+}
+/* The bundle tips over the chute edge, speeds down the slope, leaves it, tumbles under gravity,
+   bounces once on the bin floor and settles with a small random offset. */
+function dropBundle(g, binY) {
+  var G = 9.8, A = 2.2, c = Math.SQRT1_2, TILT = 0.79;
+  var P0 = { z: 0.2, y: STACK0.y }, P1 = { z: 0.32, y: 0.885 }, P2 = { z: 0.46, y: 0.752 };
+  var T0 = 0.28;
+  var S = Math.hypot(P2.z - P1.z, P2.y - P1.y), T1 = Math.sqrt(2 * S / A), v = A * T1;
+  var vz = v * c, vy0 = v * c;
+  var dh = Math.max(0.02, P2.y - binY);
+  var T2 = (-vy0 + Math.sqrt(vy0 * vy0 + 2 * G * dh)) / G;
+  var vImp = vy0 + G * T2, hopV = 0.22 * vImp, T3 = 2 * hopV / G, T4 = 0.16;
+  var T = T0 + T1 + T2 + T3 + T4;
+  var yaw = rnd(-0.07, 0.07), dx = rnd(-0.025, 0.025), rImp = 0.32, wob = rnd(-0.08, 0.08);
+  var zLand = P2.z + vz * T2, zEnd = Math.min(zLand + 0.03, 0.6);
+  var x0 = g.position.x;
+  SFX.scrape(T0 + T1, 800, 2800, 0.2);
+  SFX.whoosh(T2, 400, 900, 0.1, T0 + T1);
+  SFX.thud(1, T0 + T1 + T2); SFX.flutter(5, T0 + T1 + T2, 0.12);
+  SFX.thud(0.35, T0 + T1 + T2 + T3);
+  function final() { g.position.set(x0 + dx, binY, zEnd); g.rotation.set(0, yaw, 0); }
+  return tween(T, function (e, u) {
+    var t = u * T, tt, p;
+    if (t < T0) {
+      p = ease.io(t / T0);
+      g.position.set(x0, P0.y + (P1.y - P0.y) * p, P0.z + (P1.z - P0.z) * p);
+      g.rotation.set(TILT * p, 0, 0);
+    } else if (t < T0 + T1) {
+      tt = t - T0; p = clamp(0.5 * A * tt * tt / S, 0, 1);
+      g.position.set(x0, P1.y + (P2.y - P1.y) * p, P1.z + (P2.z - P1.z) * p);
+      g.rotation.set(TILT, 0, 0);
+    } else if (t < T0 + T1 + T2) {
+      tt = t - T0 - T1; p = tt / T2;
+      g.position.set(x0 + dx * p, P2.y - vy0 * tt - 0.5 * G * tt * tt, P2.z + vz * tt);
+      g.rotation.set(TILT + (rImp - TILT) * p, yaw * p, wob * p);
+    } else if (t < T0 + T1 + T2 + T3) {
+      tt = t - T0 - T1 - T2; p = tt / T3;
+      g.position.set(x0 + dx, binY + hopV * tt - 0.5 * G * tt * tt, zLand + (zEnd - zLand) * p);
+      g.rotation.set(rImp * (1 - p), yaw, wob * (1 - p));
+    } else final();
+  }, ease.lin).then(final);
+}
+
+/* staple positions, relative to the middle of the stack. Landscape sheets are folded across their long side,
+   so the middle staples sit on the centre line, one each side of the fold's midpoint. */
+function stapleSpots(style, bw, bl) {
+  var H = Math.PI / 2;
+  if (style === 'middle') {
+    return bw >= bl ? [{ x: 0, z: -bl * 0.25, r: H }, { x: 0, z: bl * 0.25, r: H }]
+                    : [{ x: -bw * 0.25, z: 0, r: 0 }, { x: bw * 0.25, z: 0, r: 0 }];
+  }
+  if (style === 'side') return [{ x: -bw / 2 + 0.013, z: -bl * 0.235, r: H }, { x: -bw / 2 + 0.013, z: bl * 0.235, r: H }];
+  return [{ x: -bw / 2 + 0.02, z: -bl / 2 + 0.02, r: 0.785 }];
+}
+async function doBundle() {
+  if (state.busy) return;
+  if (!state.tray.length) { toast('The printer tray is empty. Print a few pages first.'); return; }
+  state.busy = true; refresh(); peekAction();
+  var order = state.tray.slice().sort(function (a, b) { return b.page - a.page; });   // page 1 ends up on top
+  var bw = 0, bl = 0; order.forEach(function (s) { bw = Math.max(bw, s.dim.w); bl = Math.max(bl, s.dim.l); });
+  var n = order.length, fast = n > 20;
+  var stackG = new THREE.Group(); stackG.position.copy(STACK0); bundlerG.add(stackG);
+  state.curStack = stackG;
+  setPhase('bundle:collate');
+  pLed.material.color.set(0x2bd47a);
+  printerLcd(['READY', 'TRAY EMPTY']);
+
+  for (var i = 0; i < n; i++) {
+    var sh = order[i];
+    state.tray.splice(state.tray.indexOf(sh), 1); settleTray();
+    sh.free();
+    stackG.attach(sh.group);
+    var p0 = sh.group.position.clone(), r0 = sh.group.rotation.y;
+    var p1 = new THREE.Vector3(rnd(-0.015, 0.015), ST * (i + 0.5), rnd(-0.015, 0.015)), r1 = rnd(-0.05, 0.05);
+    sh.landing = p1; sh.rot = r1;
+    setStatus('Collating page ' + (sh.page + 1) + ' (' + (i + 1) + ' of ' + n + ')', true);
+    bundlerLcd(['COLLATING', (i + 1) + ' / ' + n, 'PAGE ' + (sh.page + 1)], '#ffd36b');
+    refresh();
+    SFX.whoosh(fast ? 0.28 : 0.55, 500, 1800, 0.16);
+    await tween(fast ? 0.3 : 0.62, function (e) {
+      sh.group.position.lerpVectors(p0, p1, e);
+      sh.group.position.y += Math.sin(e * Math.PI) * 0.3;
+      sh.group.rotation.y = r0 + (r1 - r0) * e;
+    });
+    SFX.slap(0.35);
+  }
+
+  setStatus('Squaring the stack', true);
+  bundlerLcd(['JOGGING', n + ' SHEETS'], '#ffd36b');
+  setPhase('bundle:jog'); SFX.rattle(0.8, 16);
+  await tween(0.8, function (e, u) {
+    order.forEach(function (s) { s.group.position.x = s.landing.x * (1 - e); s.group.position.z = s.landing.z * (1 - e); s.group.rotation.y = s.rot * (1 - e); });
+    stackG.position.x = STACK0.x + (reduceMotion ? 0 : Math.sin(u * Math.PI * 6) * 0.007 * (1 - u));
+  });
+  stackG.position.x = STACK0.x;
+
+  setStatus('Stapling', true);
+  setPhase('bundle:staple');
+  bundlerLcd(['STAPLING', state.staple === 'corner' ? 'CORNER' : state.staple === 'middle' ? 'MIDDLE X2' : 'SIDE X2'], '#ffd36b');
+  var spots = stapleSpots(state.staple, bw, bl);
+  var topY = STACK0.y + n * ST;
+  var CAR_Z = -0.15;
+  for (var s = 0; s < spots.length; s++) {
+    var sp = spots[s];
+    await moveHead(STACK0.x + sp.x, STACK0.z + sp.z - CAR_Z, 0.6);
+    var Lp = 1.18 - topY;
+    SFX.servo(0.22, 260, 420, 0.5);
+    await tween(0.22, function (e) { setRam(L0 + (Lp - L0) * e); }, ease.inn);
+    SFX.staple();
+    var st = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.0016, 0.004), M.chrome);
+    st.position.set(sp.x, n * ST + 0.0008, sp.z); st.rotation.y = sp.r; st.castShadow = true; stackG.add(st);
+    await sleep(120);
+    await tween(0.22, function (e) { setRam(Lp + (L0 - Lp) * e); }, ease.out);
+  }
+  await moveHead(0.28, 0.02, 0.5);
+
+  setStatus('Delivering the bundle', true);
+  setPhase('bundle:deliver'); SFX.scrape(0.5, 1000, 1600, 0.12);
+  bundlerLcd(['DONE', n + ' PAGES', 'BUNDLE ' + (state.bundles.length + 1)], '#7dffb0');
+  var binY = BIN_FLOOR + 0.012 + state.binH;
+  await tween(0.5, function (e) { stackG.position.z = STACK0.z + (0.2 - STACK0.z) * e; });
+  await dropBundle(stackG, binY);
+  state.binH += n * ST + 0.003;
+  state.bundles.push({ pages: order.map(function (s) { return s.page + 1; }).reverse(), group: stackG, sheets: order, bw: bw, bl: bl, style: state.staple, spots: spots });
+  state.busy = false;
+  setStatus('Ready');
+  bundlerLcd(['READY', 'NO SHEETS']);
+  refresh();
+  toast('Bundle ' + state.bundles.length + ' is in the bin.');
+  SFX.beep(); setPhase('bundle:done');
+}
+
+/* Presentation of a finished bundle: it is lifted out of the bin, tilted towards the viewer, and the top pages are
+   fanned out around the staples so the contents of each page can be seen. Then everything goes back the way it was. */
+var SHOW_POS = new THREE.Vector3(STACK0.x, BIN_FLOOR + 0.72, 0.95);
+async function inspectBundle(b) {
+  if (!b || state.busy) return;
+  state.busy = true; refresh(); peekAction(); setPhase('inspect:start');
+  setStatus('Showing bundle ' + (state.bundles.indexOf(b) + 1), true);
+  var g = b.group, n = b.sheets.length, k = Math.min(n - 1, 5), D = 0.3;
+  var p0 = g.position.clone(), ry0 = g.rotation.y, RX = 0.95;
+  var pv = b.style === 'corner' ? { x: b.spots[0].x, z: b.spots[0].z } : b.style === 'side' ? { x: b.spots[0].x, z: 0 } : { x: 0, z: 0 };
+  bundlerLcd(['SHOWING', 'BUNDLE ' + (state.bundles.indexOf(b) + 1), n + ' PAGES'], '#7dffb0');
+  SFX.whoosh(0.9, 300, 1100, 0.12);
+  await tween(1.1, function (e) {
+    g.position.lerpVectors(p0, SHOW_POS, e); g.position.y += Math.sin(e * Math.PI) * 0.06;
+    g.rotation.set(RX * e, ry0 * (1 - e), 0);
+  });
+  await sleep(500 * (state.shooting ? 1 : 0.6));
+  var pivots = [];
+  for (var j = 0; j < k; j++) {
+    var sh = b.sheets[n - 1 - j], pvG = new THREE.Group();
+    pvG.position.set(pv.x, sh.group.position.y, pv.z); g.add(pvG); pvG.attach(sh.group);
+    pivots.push({ g: pvG, sh: sh, a: -(k - j) * D });
+  }
+  for (var j2 = 0; j2 < k; j2++) {
+    (function (o, last) { SFX.flutter(3, 0, 0.1); o.run = tween(0.55, function (e) { o.g.rotation.y = o.a * e; }, ease.out); })(pivots[j2]);
+    await sleep(320);
+  }
+  await Promise.all(pivots.map(function (o) { return o.run; }));
+  await sleep(1700);
+  SFX.flutter(4, 0, 0.1);
+  await tween(0.8, function (e) { pivots.forEach(function (o) { o.g.rotation.y = o.a * (1 - e); }); });
+  pivots.forEach(function (o) { g.attach(o.sh.group); g.remove(o.g); });
+  SFX.whoosh(0.8, 700, 300, 0.1);
+  await tween(1.0, function (e) {
+    g.position.lerpVectors(SHOW_POS, p0, e); g.position.y += Math.sin(e * Math.PI) * 0.04;
+    g.rotation.set(RX * (1 - e), ry0 * e, 0);
+  });
+  g.position.copy(p0); g.rotation.set(0, ry0, 0); SFX.thud(0.8, 0);
+  state.busy = false; setStatus('Ready'); bundlerLcd(['READY', 'NO SHEETS']); refresh(); setPhase('inspect:done');
+}
+
+/* ---------- screen content ---------- */
+function clipText(g, s, w) { if (g.measureText(s).width <= w) return s; while (s.length > 1 && g.measureText(s + '...').width > w) s = s.slice(0, -1); return s + '...'; }
+function menuBar(g, W, title) {
+  g.fillStyle = '#12181e'; g.fillRect(0, 0, W, 30);
+  g.fillStyle = '#4fc6e0'; g.beginPath(); g.arc(18, 15, 6, 0, 7); g.fill();
+  g.fillStyle = '#dbe5ec'; g.font = '600 14px Helvetica,Arial,sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+  g.fillText('Print Room OS', 34, 15);
+  g.fillStyle = '#8fa1af'; g.font = '14px Helvetica,Arial,sans-serif'; g.fillText('File    View    Window', 170, 15);
+  var d = new Date(), hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  g.textAlign = 'right'; g.fillStyle = '#dbe5ec'; g.fillText(hm, W - 16, 15); g.textAlign = 'left';
+}
+var lastIdle = 0;
+function drawIdle(g, now) {
+  if (now - lastIdle < 500) return false;
+  lastIdle = now;
+  var W = 1280, H = 720;
+  var gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#0f2a3a'); gr.addColorStop(1, '#0b5468');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,.06)'; g.beginPath(); g.arc(1000, 560, 280, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.05)'; g.beginPath(); g.arc(220, 120, 200, 0, 7); g.fill();
+  menuBar(g, W);
+  var d = new Date();
+  g.fillStyle = '#eaf3f8'; g.textAlign = 'center'; g.font = '600 120px Helvetica,Arial,sans-serif';
+  g.fillText(('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2), W / 2, 300);
+  g.font = '24px Helvetica,Arial,sans-serif'; g.fillStyle = '#a9c4d2';
+  g.fillText('Open a PDF or a video from the Computer panel', W / 2, 372);
+  [['Guide.pdf', 340, '#e4ecf1'], ['Clip.mp4', 940, '#4fc6e0']].forEach(function (ic) {
+    g.fillStyle = ic[2]; g.fillRect(ic[1] - 34, 470, 68, 84); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(ic[1] - 24, 492, 48, 6); g.fillRect(ic[1] - 24, 508, 36, 6);
+    g.fillStyle = '#eaf3f8'; g.font = '16px Helvetica,Arial,sans-serif'; g.fillText(ic[0], ic[1], 584);
+  });
+  g.textAlign = 'left';
+  return true;
+}
+function drawDoc(g, dt) {
+  var d = state.doc, W = 1280, H = 720, top = DOC.top, viewH = DOC.viewH, pad = DOC.pad;
+  var total = d.total, max = d.max;
+  if (state.playing && d.n && !state.draggingPos) {
+    if (state.endHold > 0) {
+      state.endHold -= dt;
+      if (state.endHold <= 0) { if (state.loop) state.scrollY = 0; else { state.playing = false; syncPlay(); } }
+    } else {
+      state.scrollY += state.speed * dt;
+      tickAcc += state.speed * dt; var tk = 0; while (tickAcc >= 70 && tk++ < 3) { tickAcc -= 70; SFX.tick(); } if (tickAcc > 140) tickAcc = 0;
+      if (state.scrollY >= max) { state.scrollY = max; state.endHold = 1.4; }
+    }
+  }
+  state.scrollY = clamp(state.scrollY, 0, max);
+  g.fillStyle = '#2a3036'; g.fillRect(0, 0, W, H);
+  for (var i = 0; i < d.n; i++) {
+    var L = d.lay[i], pw = L.pw, ph = L.ph, x = (W - pw) / 2, y = top + pad - state.scrollY + L.y;
+    if (y > H || y + ph < top) continue;
+    g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 4, y + 6, pw, ph);
+    if (d.pages[i]) g.drawImage(d.pages[i], x, y, pw, ph);
+    else { g.fillStyle = '#fff'; g.fillRect(x, y, pw, ph); g.fillStyle = '#8a97a3'; g.font = '20px Helvetica,Arial,sans-serif'; g.textAlign = 'center'; g.fillText('Rendering page ' + (i + 1) + '...', x + pw / 2, y + ph / 2); g.textAlign = 'left'; }
+  }
+  menuBar(g, W);
+  g.fillStyle = '#e8edf1'; g.fillRect(0, 30, W, 44);
+  g.fillStyle = '#c3ccd4'; g.fillRect(0, 73, W, 1);
+  g.textBaseline = 'middle'; g.font = '600 16px Helvetica,Arial,sans-serif'; g.fillStyle = '#1b2630';
+  g.fillText(clipText(g, d.name, 460), 20, 52);
+  var cur = pageAtScroll(d, state.scrollY) + 1;
+  g.textAlign = 'center'; g.font = '500 15px Helvetica,Arial,sans-serif'; g.fillStyle = '#41505d';
+  g.fillText('Page ' + cur + ' of ' + d.n, W / 2, 52);
+  g.textAlign = 'right'; g.fillText((state.playing ? 'Auto-scroll  ' + Math.round(state.speed) + ' px/s' : 'Paused'), W - 44, 52);
+  g.fillStyle = state.playing ? '#0a7a94' : '#7c8a96';
+  if (state.playing) { g.beginPath(); g.moveTo(W - 32, 44); g.lineTo(W - 32, 60); g.lineTo(W - 18, 52); g.closePath(); g.fill(); }
+  else { g.fillRect(W - 32, 44, 5, 16); g.fillRect(W - 23, 44, 5, 16); }
+  g.textAlign = 'left';
+  var th = Math.max(36, viewH * viewH / total), ty = top + 4 + (max ? state.scrollY / max : 0) * (viewH - 8 - th);
+  g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(W - 14, top + 4, 8, viewH - 8);
+  g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(W - 14, ty, 8, th);
+  if (!state.draggingPos) {
+    var p = $('#pos'); if (p && document.activeElement !== p) p.value = max ? Math.round(state.scrollY / max * 1000) : 0;
+    $('#posOut').textContent = 'Page ' + cur;
+  }
+}
+function drawVideo(g) {
+  var W = 1280, H = 720, v = video;
+  g.fillStyle = '#05080b'; g.fillRect(0, 0, W, H);
+  var top = 30, bot = 56, aw = W, ah = H - top - bot;
+  if (v.videoWidth) {
+    var s = Math.min(aw / v.videoWidth, ah / v.videoHeight), dw = v.videoWidth * s, dh = v.videoHeight * s;
+    try { g.drawImage(v, (aw - dw) / 2, top + (ah - dh) / 2, dw, dh); } catch (e) {}
+  } else { g.fillStyle = '#8a97a3'; g.font = '22px Helvetica,Arial,sans-serif'; g.textAlign = 'center'; g.fillText('Loading video...', W / 2, H / 2); g.textAlign = 'left'; }
+  menuBar(g, W);
+  g.fillStyle = 'rgba(12,18,24,.94)'; g.fillRect(0, H - bot, W, bot);
+  var dur = v.duration || 0, cur = v.currentTime || 0, bw = W - 360;
+  g.fillStyle = '#e8edf1';
+  if (v.paused) { g.beginPath(); g.moveTo(26, H - 38); g.lineTo(26, H - 18); g.lineTo(44, H - 28); g.closePath(); g.fill(); }
+  else { g.fillRect(26, H - 38, 6, 20); g.fillRect(38, H - 38, 6, 20); }
+  g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(70, H - 31, bw, 6);
+  g.fillStyle = '#4fc6e0'; g.fillRect(70, H - 31, dur ? bw * cur / dur : 0, 6);
+  g.fillStyle = '#e8edf1'; g.font = '500 15px "Courier New",monospace'; g.textBaseline = 'middle';
+  g.fillText(fmtT(cur) + ' / ' + fmtT(dur), 70 + bw + 20, H - 28);
+  g.font = '500 14px Helvetica,Arial,sans-serif'; g.textAlign = 'right'; g.fillStyle = '#9fb0bd';
+  g.fillText(clipText(g, state.videoName, 240), W - 20, H - 28); g.textAlign = 'left';
+  if (!seeking) {
+    var sk = $('#vSeek'); if (sk && document.activeElement !== sk) sk.value = dur ? Math.round(cur / dur * 1000) : 0;
+    $('#vTime').textContent = fmtT(cur) + ' / ' + fmtT(dur);
+  }
+}
+function fmtT(s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+function drawScreen(dt, now) {
+  var dirty = true;
+  if (state.mode === 'doc' && state.doc) drawDoc(sg, dt);
+  else if (state.mode === 'video') drawVideo(sg);
+  else dirty = drawIdle(sg, now);
+  if (dirty) screenTex.needsUpdate = true;
+}
+
+/* ---------- documents ---------- */
+function newDoc(name, n, kind, dims) {
+  var d = { name: name, n: n, kind: kind, pages: new Array(n).fill(null), dims: [], asp: [] };
+  for (var i = 0; i < n; i++) { var m = dims && dims[i] || A4; d.dims.push(m); d.asp.push(m.l / m.w); }
+  layoutDoc(d); return d;
+}
+// where each page sits on the monitor: wide pages are shown wider so they stay readable
+var DOC = { pad: 22, gap: 22, top: 74, viewH: 646 };
+function layoutDoc(d) {
+  var y = 0, L = [];
+  for (var i = 0; i < d.n; i++) {
+    var pw = d.asp[i] < 0.9 ? 760 : 600, ph = Math.round(pw * d.asp[i]);
+    L.push({ y: y, pw: pw, ph: ph }); y += ph + DOC.gap;
+  }
+  d.lay = L; d.total = DOC.pad * 2 + Math.max(0, y - DOC.gap); d.max = Math.max(0, d.total - DOC.viewH);
+}
+function pageAtScroll(d, sy) {
+  var c = sy + DOC.viewH / 2 - DOC.pad, k = 0;
+  for (var i = 0; i < d.n; i++) if (d.lay[i].y <= c) k = i;
+  return k;
+}
+function wrapText(g, s, x, y, w, lh) {
+  var words = s.split(' '), line = '';
+  for (var i = 0; i < words.length; i++) {
+    var t = line ? line + ' ' + words[i] : words[i];
+    if (g.measureText(t).width > w && line) { g.fillText(line, x, y); line = words[i]; y += lh; } else line = t;
+  }
+  g.fillText(line, x, y); return y + lh;
+}
+function makeSamplePages() {
+  var pages = [], total = 6;
+  function page(draw, n) {
+    var c = newCanvas(PW, PH), g = c.getContext('2d');
+    g.fillStyle = '#fffefb'; g.fillRect(0, 0, PW, PH);
+    draw(g);
+    g.fillStyle = '#7a8793'; g.font = '13px Helvetica,Arial,sans-serif'; g.textAlign = 'left'; g.fillText('Print Room field guide', 56, PH - 36);
+    g.textAlign = 'right'; g.fillText(n + ' / ' + total, PW - 56, PH - 36); g.textAlign = 'left';
+    return c;
+  }
+  function flow(g, items) {
+    var y = 90, x = 56, w = PW - 112;
+    items.forEach(function (it) {
+      g.fillStyle = '#16212b';
+      if (it.t === 'k') { g.font = '700 13px Helvetica,Arial,sans-serif'; g.fillStyle = '#0a7a94'; g.fillText(it.s.toUpperCase().split('').join(' '), x, y); y += 30; }
+      else if (it.t === 'h') { g.font = '700 38px Georgia,serif'; y = wrapText(g, it.s, x, y + 6, w, 44) + 8; }
+      else if (it.t === 'p') { g.font = '19px Georgia,serif'; g.fillStyle = '#2b3944'; y = wrapText(g, it.s, x, y, w, 29) + 10; }
+      else if (it.t === 'li') { g.font = '19px Georgia,serif'; g.fillStyle = '#2b3944'; g.fillText(it.n, x, y); y = wrapText(g, it.s, x + 34, y, w - 34, 29) + 8; }
+    });
+    return y;
+  }
+  pages.push(page(function (g) {
+    g.fillStyle = '#0a7a94'; g.fillRect(0, 0, PW, 14);
+    g.fillStyle = '#0a7a94'; g.font = '700 14px Helvetica,Arial,sans-serif'; g.fillText('F I E L D   G U I D E', 56, 120);
+    g.fillStyle = '#16212b'; g.font = '700 84px Georgia,serif'; g.fillText('Print', 56, 250); g.fillText('Room', 56, 336);
+    g.font = '24px Georgia,serif'; g.fillStyle = '#41505d'; g.fillText('From the screen to a stapled bundle', 56, 396);
+    for (var i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#e8edf1' : '#ffffff'; g.strokeStyle = '#b7c2cb'; g.lineWidth = 2; g.fillRect(300 + i * 16, 520 - i * 14, 220, 156); g.strokeRect(300 + i * 16, 520 - i * 14, 220, 156); }
+    g.fillStyle = '#efa800'; g.fillRect(396, 436, 28, 6); g.fillRect(56, 610, 140, 8);
+    g.fillStyle = '#41505d'; g.font = '16px Georgia,serif'; g.fillText('Sample document, six pages', 56, 650);
+  }, 1));
+  pages.push(page(function (g) {
+    flow(g, [{ t: 'k', s: 'Chapter one' }, { t: 'h', s: 'The desk' },
+      { t: 'p', s: 'Everything starts at the computer. Open a PDF and it scrolls on its own, page after page, at a speed you choose. Drop in a video and it plays inside the monitor.' },
+      { t: 'p', s: 'Drag the speed slider while the page moves. Pause when you want to read a paragraph, and drag the position slider to jump to any part of the document.' },
+      { t: 'p', s: 'Pages you can read on the screen are the same pages the printer will use, so what you see is what lands in the tray.' }]);
+  }, 2));
+  pages.push(page(function (g) {
+    flow(g, [{ t: 'k', s: 'Chapter two' }, { t: 'h', s: 'Printing' },
+      { t: 'p', s: 'The printer takes any selection of pages. Pick them one by one or type a range.' },
+      { t: 'li', n: '1.', s: 'Open the Printer panel and tap the pages you want.' },
+      { t: 'li', n: '2.', s: 'Or type a range such as 1-3, 5 and the thumbnails follow.' },
+      { t: 'li', n: '3.', s: 'Press Print. Each sheet slides out of the slot face up and builds a stack in the tray.' },
+      { t: 'p', s: 'You can print more than once. Every job adds to the same tray, in the order it was printed.' }]);
+  }, 3));
+  pages.push(page(function (g) {
+    var y = flow(g, [{ t: 'k', s: 'Chapter three' }, { t: 'h', s: 'Collating' },
+      { t: 'p', s: 'The bundler picks sheets from the tray and puts them in page order, whatever order they were printed in. Then it jogs the stack square.' }]);
+    var data = [['Job A', 6], ['Job B', 3], ['Job C', 9]], bx = 56, by = y + 20;
+    g.font = '15px Helvetica,Arial,sans-serif'; g.fillStyle = '#41505d'; g.fillText('Sheets per job', bx, by);
+    data.forEach(function (d, i) {
+      g.fillStyle = '#41505d'; g.fillText(d[0], bx, by + 46 + i * 46);
+      g.fillStyle = i === 2 ? '#0a7a94' : '#9fc7d3'; g.fillRect(bx + 70, by + 28 + i * 46, d[1] * 40, 28);
+      g.fillStyle = '#16212b'; g.fillText('' + d[1], bx + 78 + d[1] * 40, by + 48 + i * 46);
+    });
+    g.strokeStyle = '#b7c2cb'; g.beginPath(); g.moveTo(bx + 70, by + 20); g.lineTo(bx + 70, by + 170); g.stroke();
+  }, 4));
+  pages.push(page(function (g) {
+    var y = flow(g, [{ t: 'k', s: 'Chapter four' }, { t: 'h', s: 'Stapling' }, { t: 'p', s: 'Three staple styles are built in.' }]);
+    var rows = [['Style', 'Staples', 'Best for'], ['Corner', '1', 'Short handouts'], ['Side', '2', 'Thicker bundles'], ['Middle', '2', 'Landscape sheets']], tx = 56, ty = y + 10, cw = [150, 120, 250];
+    rows.forEach(function (r, i) {
+      var x = tx;
+      g.fillStyle = i === 0 ? '#0a7a94' : (i % 2 ? '#eef2f5' : '#ffffff'); g.fillRect(tx, ty + i * 48, 520, 48);
+      r.forEach(function (c, k) { g.fillStyle = i === 0 ? '#fff' : '#16212b'; g.font = (i === 0 ? '700 ' : '') + '18px Helvetica,Arial,sans-serif'; g.fillText(c, x + 14, ty + i * 48 + 30); x += cw[k]; });
+    });
+    g.strokeStyle = '#b7c2cb'; g.strokeRect(tx, ty, 520, 192);
+  }, 5));
+  pages.push(page(function (g) {
+    flow(g, [{ t: 'k', s: 'Chapter five' }, { t: 'h', s: 'The bundle' },
+      { t: 'p', s: 'Once the staples are in, the stack tips down the chute and drops into the bin. The panel keeps a list of every bundle with its page numbers.' },
+      { t: 'p', s: 'Print a different selection and run it again. Each bundle lands on top of the last one.' },
+      { t: 'p', s: 'That is the whole loop: read, print, collate, staple.' }]);
+  }, 6));
+  return pages;
+}
+function useSample() {
+  var doc = newDoc('Print Room field guide.pdf', 6, 'sample');
+  var p = makeSamplePages(); doc.pages = p;
+  setDoc(doc);
+}
+
+function setDoc(doc) {
+  state.doc = doc; state.mode = 'doc'; state.scrollY = 0; state.endHold = 0; state.playing = true;
+  state.sel = new Set(); for (var i = 0; i < doc.n; i++) state.sel.add(i);
+  setRack(doc.dims[0] || A4); stopVideo(); buildThumbs(); syncPlay(); showControls(); refresh(); SFX.ding();
+  for (var k = 0; k < doc.n; k++) if (doc.pages[k]) drawThumb(k);
+}
+
+/* PDF */
+function loadScript(src) {
+  return new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { rej(new Error('script')); }; document.head.appendChild(s); });
+}
+var PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+async function ensurePdfJs() {
+  if (!window.pdfjsLib) {
+    try { await loadScript(PDFJS + 'pdf.min.js'); } catch (e) { var er = new Error('The PDF reader could not be downloaded.'); er.name = 'LoadError'; throw er; }
+  }
+  // Loading the worker as a plain script makes pdf.js run it on the page itself. A separate Worker thread
+  // has to be fetched from another origin, which sandboxed pages are not allowed to do, and was why real PDFs failed.
+  if (!window.pdfjsWorker) { try { await loadScript(PDFJS + 'pdf.worker.min.js'); } catch (e) {} }
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
+}
+function pdfError(e) {
+  var nm = e && e.name, msg = (e && e.message) || String(e);
+  if (nm === 'PasswordException') return 'This PDF asks for a password to open.';
+  if (nm === 'InvalidPDFException') return 'The reader says this is not a valid PDF (' + msg.slice(0, 60) + ').';
+  if (nm === 'LoadError') return msg + ' Check the connection and try again.';
+  if (nm === 'MissingPDFException') return 'The file could not be read from your device.';
+  return 'The PDF could not be opened: ' + msg.slice(0, 90);
+}
+async function openPdf(file) {
+  toast('Opening ' + file.name + '...');
+  try {
+    await ensurePdfJs();
+    var data = new Uint8Array(await file.arrayBuffer());
+    var pdf = await window.pdfjsLib.getDocument({ data: data, disableFontFace: true, isEvalSupported: false }).promise;
+    var n = Math.min(pdf.numPages, MAXP);
+    // first pass: the trim size of every page (rotation and crop box already applied), so each sheet matches its page
+    var pgs = [], dims = [], mms = [];
+    for (var j = 1; j <= n; j++) {
+      var pg = await pdf.getPage(j), vv = pg.getViewport({ scale: 1 });
+      pgs.push(pg); dims.push(dimsFromPts(vv.width, vv.height)); mms.push([Math.round(vv.width / 72 * 25.4), Math.round(vv.height / 72 * 25.4)]);
+    }
+    var doc = newDoc(file.name, n, 'pdf', dims); doc.mm = mms; setDoc(doc);
+    if (pdf.numPages > MAXP) toast('Showing the first ' + MAXP + ' of ' + pdf.numPages + ' pages.');
+    var bad = 0;
+    for (var i = 1; i <= n; i++) {
+      if (state.doc !== doc) return;
+      var page = pgs[i - 1], v0 = page.getViewport({ scale: 1 });
+      var long = 905, cw = v0.width >= v0.height ? long : Math.round(long * v0.width / v0.height), ch = v0.width >= v0.height ? Math.round(long * v0.height / v0.width) : long;
+      cw = Math.max(40, cw); ch = Math.max(40, ch);
+      var c = newCanvas(cw, ch), g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+      try {
+        var vp = page.getViewport({ scale: cw / v0.width * 1.5 }), tmp = newCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+        var tg = tmp.getContext('2d'); tg.fillStyle = '#fff'; tg.fillRect(0, 0, tmp.width, tmp.height);
+        await page.render({ canvasContext: tg, viewport: vp }).promise;
+        g.imageSmoothingQuality = 'high'; g.drawImage(tmp, 0, 0, cw, ch);
+      } catch (pe) {
+        console.error(pe); bad++;
+        g.fillStyle = '#8a97a3'; g.font = '20px Helvetica,Arial,sans-serif'; g.textAlign = 'center'; g.fillText('This page could not be drawn', cw / 2, ch / 2); g.textAlign = 'left';
+      }
+      doc.pages[i - 1] = c; drawThumb(i - 1); refresh();
+    }
+    if (bad) toast(bad + (bad === 1 ? ' page' : ' pages') + ' could not be drawn.');
+  } catch (e) {
+    console.error(e);
+    toast(pdfError(e));
+  }
+}
+
+/* video */
+var video = document.createElement('video');
+video.playsInline = true; video.loop = true; video.preload = 'auto'; video.setAttribute('aria-hidden', 'true');
+video.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:0;top:0';
+document.body.appendChild(video);
+var videoUrl = null, seeking = false;
+function stopVideo() { try { video.pause(); } catch (e) {} }
+function openVideo(file) {
+  audioInit();
+  if (videoUrl) URL.revokeObjectURL(videoUrl);
+  videoUrl = URL.createObjectURL(file);
+  state.videoName = file.name;
+  var prev = state.mode;
+  video.onerror = function () { toast('This browser cannot play that video format.'); state.mode = state.doc ? 'doc' : 'idle'; showControls(); refresh(); };
+  video.src = videoUrl; video.muted = false;
+  state.mode = 'video'; showControls(); refresh();
+  var p = video.play(); if (p && p.catch) p.catch(function () { video.muted = true; $('#vMute').textContent = 'Unmute'; video.play().catch(function () {}); });
+}
+
+/* ---------- UI ---------- */
+var toastT;
+function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('on'); }, 3200); }
+function setStatus(msg, busy) { $('#statusText').textContent = msg; $('#statusbar').setAttribute('data-busy', busy ? '1' : '0'); }
+function syncPlay() { $('#btnPlay').textContent = state.playing ? 'Pause scroll' : 'Play scroll'; }
+function showControls() {
+  var v = state.mode === 'video';
+  $('#docCtl').hidden = v || !state.doc; $('#vidCtl').hidden = !v;
+  var info = $('#srcInfo');
+  if (v) info.textContent = 'Playing ' + state.videoName;
+  else if (state.doc) info.textContent = state.doc.name + ' - ' + state.doc.n + (state.doc.n === 1 ? ' page' : ' pages') + (state.doc.mm ? ' - ' + state.doc.mm[0][0] + ' x ' + state.doc.mm[0][1] + ' mm' : ' - A4');
+  else info.textContent = 'Nothing open.';
+}
+function buildThumbs() {
+  var wrap = $('#thumbs'); wrap.innerHTML = '';
+  if (!state.doc) return;
+  for (var i = 0; i < state.doc.n; i++) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'thumb'; b.dataset.i = i;
+    b.setAttribute('aria-label', 'Page ' + (i + 1)); b.setAttribute('aria-pressed', state.sel.has(i) ? 'true' : 'false');
+    var as = state.doc.asp[i]; b.style.aspectRatio = '1 / ' + as.toFixed(4); b.style.alignSelf = 'start'; if (as < 1) b.style.gridColumn = 'span 2';
+    var c = newCanvas(64, Math.max(20, Math.round(64 * as))); b.appendChild(c); var sp = document.createElement('span'); sp.textContent = i + 1; b.appendChild(sp);
+    wrap.appendChild(b);
+  }
+}
+function drawThumb(i) {
+  var b = $('#thumbs .thumb[data-i="' + i + '"]'); if (!b || !state.doc || !state.doc.pages[i]) return;
+  var c = b.querySelector('canvas'), g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(state.doc.pages[i], 0, 0, c.width, c.height);
+}
+function syncSel() {
+  $$('#thumbs .thumb').forEach(function (b) { b.setAttribute('aria-pressed', state.sel.has(+b.dataset.i) ? 'true' : 'false'); });
+  $('#range').value = state.doc && state.sel.size ? rangeText(Array.from(state.sel).map(function (i) { return i + 1; })) : '';
+  refresh();
+}
+function parseRange(s, n) {
+  var set = new Set();
+  s.split(',').forEach(function (part) {
+    part = part.trim(); if (!part) return;
+    var m = part.match(/^(\d*)\s*-\s*(\d*)$/);
+    if (m) { var a = m[1] ? +m[1] : 1, b = m[2] ? +m[2] : n; for (var i = Math.max(1, a); i <= Math.min(n, b); i++) set.add(i - 1); }
+    else if (/^\d+$/.test(part)) { var k = +part; if (k >= 1 && k <= n) set.add(k - 1); }
+  });
+  return set;
+}
+function refresh() {
+  var d = state.doc, selN = d ? Array.from(state.sel).filter(function (i) { return d.pages[i]; }).length : 0;
+  $('#rDoc').textContent = state.mode === 'video' ? state.videoName : d ? d.n + ' pages' : '-';
+  $('#rTray').textContent = state.tray.length;
+  $('#rBun').textContent = state.bundles.length;
+  $('#selOut').textContent = selN + ' of ' + (d ? d.n : 0);
+  var bp = $('#btnPrint'); bp.textContent = selN ? 'Print ' + selN + (selN === 1 ? ' page' : ' pages') : 'Print'; bp.disabled = state.busy || !selN;
+  $('#printInfo').textContent = state.tray.length ? state.tray.length + (state.tray.length === 1 ? ' sheet is' : ' sheets are') + ' waiting in the output tray.' : (state.doc && state.doc.mm ? 'Paper is cut to the PDF page size, ' + state.doc.mm[0][0] + ' x ' + state.doc.mm[0][1] + ' mm. ' : '') + 'Pages land in the output tray, face up.';
+  var bi = $('#btnInspect'); if (bi) bi.disabled = state.busy || !state.bundles.length;
+  var bb = $('#btnBundle'); bb.disabled = state.busy || !state.tray.length;
+  bb.textContent = state.tray.length ? 'Collate and staple ' + state.tray.length + (state.tray.length === 1 ? ' sheet' : ' sheets') : 'Collate and staple';
+  $('#bundleInfo').textContent = state.tray.length ? 'Printed order: ' + state.tray.map(function (s) { return s.page + 1; }).join(', ') + '. The bundler will put them in page order.' : 'Nothing waiting in the printer tray.';
+  var ob = $('#outbox'); ob.innerHTML = '';
+  state.bundles.forEach(function (b, i) {
+    var li = document.createElement('li'); li.innerHTML = '<span></span><span></span>';
+    li.children[0].textContent = 'Bundle ' + (i + 1) + ' - ' + b.pages.length + (b.pages.length === 1 ? ' page' : ' pages');
+    li.children[1].textContent = 'p. ' + rangeText(b.pages); ob.appendChild(li);
+  });
+  printerLcdIdle();
+}
+function printerLcdIdle() {
+  if (state.busy) return;
+  printerLcd(state.tray.length ? ['READY', state.tray.length + ' SHEETS', 'IN TRAY'] : ['READY', 'TRAY EMPTY']);
+}
+
+var titles = { room: 'Room', computer: 'Computer', printer: 'Printer', bundler: 'Bundler', studio: 'Studio' };
+var current = 'room';
+function showTab(name) {
+  current = name;
+  $$('#pbody > section').forEach(function (s) { s.hidden = s.dataset.tab !== name; });
+  $$('#views button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === name ? 'true' : 'false'); });
+  $('#ptitle').textContent = titles[name];
+}
+var VIEWS = {
+  room: { p: [0.4, 2.05, 4.9], t: [0.4, 0.85, -1.5] },
+  computer: { p: [MON.x, 1.38, MON.z + 1.25], t: [MON.x, 1.28, MON.z] },
+  printer: { p: [PRINTER.x + 0.55, 1.5, PRINTER.z + 1.5], t: [PRINTER.x, DY + 0.1, PRINTER.z + 0.2] },
+  bundler: { p: [BUNDLER.x + 1.3, 2.25, BUNDLER.z + 2.1], t: [BUNDLER.x, 0.72, BUNDLER.z + 0.25] }
+};
+function viewFor(name) {
+  var v = VIEWS[name], t = new THREE.Vector3().fromArray(v.t), p = new THREE.Vector3().fromArray(v.p);
+  var aspect = camera.aspect;
+  if (aspect < 1.4) { var k = clamp(1.4 / aspect, 1, name === 'room' ? 2.3 : 1.9); p.sub(t).multiplyScalar(k).add(t); }
+  return { p: p, t: t };
+}
+function flyTo(name) {
+  var v = viewFor(name), p0 = camera.position.clone(), t0 = controls.target.clone();
+  if (reduceMotion) { camera.position.copy(v.p); controls.target.copy(v.t); return; }
+  var dist = p0.distanceTo(v.p), dur = clamp(0.9 + 0.4 * dist, 1.1, 2.4), ctrl = p0.clone().lerp(v.p, 0.5);
+  ctrl.y += 0.12 * dist + 0.1;
+  tween(dur, function (e) { bez(p0, ctrl, v.p, e, camera.position); controls.target.lerpVectors(t0, v.t, e); }, ease.sine);
+}
+function selectView(name) { showTab(name); if (name !== 'studio') flyTo(name); layoutView(); if (name === 'studio') updateEst(); }
+
+function layoutView() {
+  if (state.recording || state.shooting) { camera.clearViewOffset(); return; }
+  var w = stage.clientWidth, h = stage.clientHeight, pr = $('#panel').getBoundingClientRect();
+  var dx = 0, dy = 0;
+  if (window.innerWidth > 760) dx = pr.right / 2; else if (!$('#panel').classList.contains('collapsed') || true) dy = (h - pr.top) / 2;
+  if (dx || dy) camera.setViewOffset(w, h, -dx, dy, w, h); else camera.clearViewOffset();
+}
+function resize() {
+  var sw = stage.clientWidth, sh = stage.clientHeight, cv = renderer.domElement;
+  if (!sw || !sh) return;
+  if ((state.recording || state.shooting) && state.recSize) {
+    // a fixed frame (horizontal, vertical or square), letterboxed on screen, so the video has a clean aspect
+    var W = state.recSize[0], H = state.recSize[1], k = Math.min(sw / W, sh / H);
+    renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+    cv.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--line);width:' + Math.floor(W * k) + 'px;height:' + Math.floor(H * k) + 'px';
+    camera.aspect = W / H;
+  } else {
+    cv.style.cssText = '';
+    renderer.setPixelRatio(pixelRatio()); renderer.setSize(sw, sh);
+    camera.aspect = sw / sh;
+  }
+  camera.updateProjectionMatrix(); layoutView();
+}
+new ResizeObserver(resize).observe(stage);
+new ResizeObserver(layoutView).observe($('#panel'));
+
+/* ---------- events ---------- */
+var phoneMQ = matchMedia('(max-width:760px)');
+function isPhone() { return phoneMQ.matches; }
+function setCollapsed(c) {
+  $('#panel').classList.toggle('collapsed', c);
+  $('#pcollapse').setAttribute('aria-expanded', c ? 'false' : 'true'); $('#pcollapse').textContent = c ? 'Show' : 'Hide';
+  layoutView();
+}
+// on a phone the bottom tab bar picks the view; tapping the tab you are on opens or closes its panel
+$$('#views button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var same = b.dataset.view === current, was = $('#panel').classList.contains('collapsed');
+    selectView(b.dataset.view);
+    if (isPhone()) setCollapsed(same ? !was : false);
+  });
+});
+$('#pcollapse').addEventListener('click', function (e) { e.stopPropagation(); setCollapsed(!$('#panel').classList.contains('collapsed')); });
+$('.phead').addEventListener('click', function () { if (isPhone()) setCollapsed(!$('#panel').classList.contains('collapsed')); });
+function peekAction() { if (isPhone()) setCollapsed(true); }   // clear the way so the machine can be watched
+$('#btnPdf').addEventListener('click', function () { $('#filePdf').click(); });
+$('#btnVideo').addEventListener('click', function () { $('#fileVideo').click(); });
+$('#btnSample').addEventListener('click', function () { useSample(); toast('Sample document loaded.'); });
+$('#filePdf').addEventListener('change', function (e) { var f = e.target.files[0]; e.target.value = ''; if (f) openPdf(f); });
+$('#fileVideo').addEventListener('change', function (e) { var f = e.target.files[0]; e.target.value = ''; if (f) openVideo(f); });
+$('#btnClear').addEventListener('click', function () { stopVideo(); state.mode = 'idle'; state.doc = null; state.sel = new Set(); buildThumbs(); showControls(); syncSel(); });
+$('#btnPlay').addEventListener('click', function () { state.playing = !state.playing; state.endHold = 0; syncPlay(); });
+$('#chkLoop').addEventListener('change', function (e) { state.loop = e.target.checked; });
+$('#speed').addEventListener('input', function (e) { state.speed = +e.target.value; $('#speedOut').textContent = e.target.value + ' px/s'; });
+$('#pos').addEventListener('input', function (e) {
+  var d = state.doc; if (!d) return;
+  state.scrollY = +e.target.value / 1000 * d.max; state.endHold = 0;
+});
+$('#pos').addEventListener('pointerdown', function () { state.draggingPos = true; });
+window.addEventListener('pointerup', function () { state.draggingPos = false; });
+$('#vPlay').addEventListener('click', function () { if (video.paused) video.play().catch(function () {}); else video.pause(); });
+video.addEventListener('play', function () { $('#vPlay').textContent = 'Pause'; });
+video.addEventListener('pause', function () { $('#vPlay').textContent = 'Play'; });
+$('#vMute').addEventListener('click', function () { video.muted = !video.muted; $('#vMute').textContent = video.muted ? 'Unmute' : 'Mute'; });
+$('#vLoop').addEventListener('change', function (e) { video.loop = e.target.checked; });
+$('#vSeek').addEventListener('input', function (e) { seeking = true; if (video.duration) video.currentTime = +e.target.value / 1000 * video.duration; });
+$('#vSeek').addEventListener('change', function () { seeking = false; });
+$('#thumbs').addEventListener('click', function (e) {
+  var b = e.target.closest('.thumb'); if (!b) return; var i = +b.dataset.i;
+  if (state.sel.has(i)) state.sel.delete(i); else state.sel.add(i); syncSel();
+});
+$('#selAll').addEventListener('click', function () { if (!state.doc) return; state.sel = new Set(); for (var i = 0; i < state.doc.n; i++) state.sel.add(i); syncSel(); });
+$('#selNone').addEventListener('click', function () { state.sel = new Set(); syncSel(); });
+$('#range').addEventListener('input', function (e) {
+  if (!state.doc) return; state.sel = parseRange(e.target.value, state.doc.n);
+  $$('#thumbs .thumb').forEach(function (b) { b.setAttribute('aria-pressed', state.sel.has(+b.dataset.i) ? 'true' : 'false'); }); refresh();
+});
+$('#btnPrint').addEventListener('click', doPrint);
+$('#btnBundle').addEventListener('click', doBundle);
+$('#btnInspect').addEventListener('click', function () { inspectBundle(state.bundles[state.bundles.length - 1]); });
+
+// drag and drop files
+var dragDepth = 0;
+window.addEventListener('dragenter', function (e) { if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0) { dragDepth++; $('#drop').classList.add('on'); } });
+window.addEventListener('dragleave', function () { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) $('#drop').classList.remove('on'); });
+window.addEventListener('dragover', function (e) { e.preventDefault(); });
+window.addEventListener('drop', function (e) {
+  e.preventDefault(); dragDepth = 0; $('#drop').classList.remove('on');
+  var f = e.dataTransfer && e.dataTransfer.files[0]; if (!f) return;
+  selectView('computer');
+  if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) openPdf(f);
+  else if (f.type.indexOf('video/') === 0) openVideo(f);
+  else toast('Drop a PDF or a video file.');
+});
+
+/* ---------- picking ---------- */
+var ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+var groups = [{ name: 'computer', g: computerG, label: 'Computer' }, { name: 'printer', g: printerG, label: 'Printer' }, { name: 'bundler', g: bundlerG, label: 'Bundler' }];
+function pick(ev) {
+  var r = renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(mouse, camera);
+  var hits = ray.intersectObjects(scene.children, true);
+  for (var i = 0; i < hits.length; i++) {
+    var o = hits[i].object;
+    while (o) { for (var k = 0; k < groups.length; k++) if (groups[k].g === o) return groups[k]; o = o.parent; }
+    if (hits[i].object.geometry && hits[i].object.geometry.type !== 'PlaneGeometry') return null;
+  }
+  return null;
+}
+var downAt = null, tip = $('#tip'), lastPick = 0;
+renderer.domElement.addEventListener('pointerdown', function (e) { downAt = { x: e.clientX, y: e.clientY }; });
+renderer.domElement.addEventListener('pointerup', function (e) {
+  if (!downAt) return; var moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y); downAt = null;
+  if (moved > 5 || state.shooting) return; var h = pick(e); if (h && h.name !== current) selectView(h.name);
+});
+renderer.domElement.addEventListener('pointermove', function (e) {
+  if (e.buttons) { tip.style.opacity = 0; return; }
+  if (e.pointerType === 'touch' || state.recording || state.shooting) return;
+  var nowp = performance.now(); if (nowp - lastPick < 80) return; lastPick = nowp;
+  var h = pick(e);
+  renderer.domElement.style.cursor = h ? 'pointer' : 'grab';
+  if (h) { tip.textContent = h.label + ' - click to move in'; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY + 14) + 'px'; tip.style.opacity = 1; } else tip.style.opacity = 0;
+});
+renderer.domElement.addEventListener('pointerleave', function () { tip.style.opacity = 0; });
+
+/* ---------- studio: camera rig, recording and the shoot director ---------- */
+var V3 = THREE.Vector3;
+var rig = { pos: new V3(), tgt: new V3(), fov: 45, token: 0, shake: false, snap: false, third: 0, thirdCur: 0, cur: { pos: new V3(), tgt: new V3(), fov: 45 } };
+var shootStyle = 'fly', abortP = null, abortRes = null, shootT0 = 0, phaseWaiters = [];
+var ABORT = { abort: true };
+ease.sine = function (t) { return 0.5 - 0.5 * Math.cos(Math.PI * t); };
+function lerp(a, b, k) { return a + (b - a) * k; }
+function setPhase(p) { state.phase = p; phaseWaiters = phaseWaiters.filter(function (w) { if (w.p === p) { w.r(); return false; } return true; }); }
+function waitPhase(p) { return new Promise(function (r) { phaseWaiters.push({ p: p, r: r }); }); }
+function until(pred) { return new Promise(function (res) { (function poll() { if (pred() || state.abort) return res(); setTimeout(poll, 40); })(); }); }
+function A(p) { var ab = abortP.then(function () { throw ABORT; }); ab.catch(function () {}); return Promise.race([p, ab]); }
+function docMetrics() {
+  var d = state.doc;
+  if (!d) return { max: 0, total: 0, at: function () { return 0; } };
+  // scroll distance that brings the top of page k + 1 (k pages scrolled past) to the top of the screen
+  return { total: d.total, max: d.max, at: function (k) { return Math.min(d.max, k >= d.n ? d.max : d.lay[Math.max(0, k)].y); } };
+}
+function fmtDur(s) { s = Math.round(s); return s >= 60 ? Math.floor(s / 60) + ' min ' + (s % 60) + ' s' : s + ' s'; }
+function bez(a, c, b, e, out) { var u = 1 - e; return out.copy(a).multiplyScalar(u * u).addScaledVector(c, 2 * u * e).addScaledVector(b, e * e); }
+ease.glide = function (t) { return 0.7 * t + 0.3 * (0.5 - 0.5 * Math.cos(Math.PI * t)); };
+// Shots are composed for a 16:9 frame. Narrower frames (vertical, square) pull the camera back so wide subjects still fit.
+function framing() { var a = camera.aspect || 16 / 9; return clamp(Math.pow((16 / 9) / a, 0.75), 1, 2.2); }
+function frameSize() {
+  var o = $('#recO').value, hq = $('#recQ').value === '1080', L = hq ? 1920 : 1280, S = hq ? 1080 : 720;
+  return o === 'v' ? [S, L] : o === 's' ? [S, S] : [L, S];
+}
+function followSheet() { var o = state.curSheet; return o ? o.getWorldPosition(new V3()) : null; }
+function followStack() { var o = state.curStack; return o ? o.getWorldPosition(new V3()).add(new V3(0, 0.04, 0)) : null; }
+function shakeVec(now) {
+  var t = now / 1000, v = new V3(
+    Math.sin(t * 1.7) * 0.0035 + Math.sin(t * 4.3) * 0.0015,
+    Math.sin(t * 1.3 + 1) * 0.003 + Math.sin(t * 3.7) * 0.001,
+    Math.sin(t * 1.1 + 2) * 0.0035);
+  v.roll = Math.sin(t * 0.9) * 0.0016 + Math.sin(t * 2.3 + 1) * 0.0008;
+  v.fov = Math.sin(t * 0.7) * 0.12;
+  return v;
+}
+function rigStart() {
+  rig.pos.copy(camera.position); rig.tgt.copy(controls.target); rig.fov = camera.fov;
+  rig.cur.pos.copy(rig.pos); rig.cur.tgt.copy(rig.tgt); rig.cur.fov = rig.fov;
+  rig.third = rig.thirdCur = 0; rig.snap = false; controls.enabled = false;
+}
+function rigEnd() {
+  rig.token++; camera.position.copy(rig.cur.pos); controls.target.copy(rig.cur.tgt);
+  camera.fov = 45; camera.updateProjectionMatrix(); controls.enabled = true; controls.update();
+}
+// A shot orbits and dollies around a target. r = distance, az = angle around the target, h = height above it,
+// fov = lens zoom; each pair goes from its first value to its second over `dur` seconds, and the move keeps
+// drifting slowly if the action runs longer. `follow` makes the camera pan to track a moving subject, and
+// `third` places the subject off-centre. The rig output is smoothed in the render loop so the camera has weight.
+function shot(sp) {
+  var token = ++rig.token, F = sp.tight ? clamp((16 / 9) / (camera.aspect || 16 / 9), 1, 2.6) : framing();
+  var a = new V3().fromArray(sp.t0), b = new V3().fromArray(sp.t1 || sp.t0), fv = sp.fov || [45, 45];
+  rig.third = sp.third || 0;
+  function pose(k, p, t) {
+    t.lerpVectors(a, b, k);
+    var r = lerp(sp.r[0], sp.r[1], k) * F, az = lerp(sp.az[0], sp.az[1], k), h = lerp(sp.h[0], sp.h[1], k) * F;
+    p.set(t.x + r * Math.sin(az), t.y + h, t.z + r * Math.cos(az));
+    if (sp.follow) { var f = sp.follow(); if (f) t.lerp(f, sp.fw || 0.7); }
+    return lerp(fv[0], fv[1], clamp(k, 0, 1.4));
+  }
+  return (async function () {
+    var p0 = new V3(), t0 = new V3(), f0 = pose(0, p0, t0);
+    if (shootStyle === 'cut' || sp.cut) { rig.pos.copy(p0); rig.tgt.copy(t0); rig.fov = f0; rig.snap = true; }
+    else {
+      var fp = rig.pos.clone(), ft = rig.tgt.clone(), ff = rig.fov, dist = fp.distanceTo(p0);
+      var dur = sp.fly || clamp(0.9 + 0.5 * dist, 1.3, 3.4);
+      var ctrl = fp.clone().lerp(p0, 0.5); ctrl.y += 0.15 * dist + 0.12;   // arc over the room instead of cutting through it
+      await tween(dur, function (e) {
+        if (token !== rig.token) return;
+        bez(fp, ctrl, p0, e, rig.pos); rig.tgt.lerpVectors(ft, t0, e); rig.fov = lerp(ff, f0, e);
+      }, ease.sine);
+    }
+    if (sp.onArrive) sp.onArrive();
+    if (token !== rig.token) return;
+    var p = new V3(), t = new V3();
+    await tween(Math.max(0.2, sp.dur), function (e) { if (token !== rig.token) return; rig.fov = pose(e, p, t); rig.pos.copy(p); rig.tgt.copy(t); }, ease.glide);
+    if (token !== rig.token) return;
+    var tau = Math.min(3, sp.dur * 0.5), v = 0.7 / Math.max(0.5, sp.dur);
+    tween(40, function (e, u) {
+      if (token !== rig.token) return;
+      var k = 1 + v * tau * (1 - Math.exp(-u * 40 / tau));
+      rig.fov = pose(k, p, t); rig.pos.copy(p); rig.tgt.copy(t);
+    }, ease.lin);
+  })();
+}
+
+/* recording: the 3D view (not the panels) plus the room sound, as a 16:9 video */
+var REC = { rec: null, chunks: [], t0: 0, url: null, blob: null, mime: '' };
+function pickMime() {
+  // hardware-friendly H.264 first: VP9 is software-encoded in most browsers and makes both the recording and its playback stutter
+  var list = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a.40.2', 'video/mp4', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+  for (var i = 0; i < list.length; i++) { try { if (MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
+  return '';
+}
+function startRecording() {
+  if (state.recording) return true;
+  if (!window.MediaRecorder || !renderer.domElement.captureStream) { toast('This browser cannot record video.'); return false; }
+  audioInit();
+  var hq = $('#recQ').value === '1080';
+  state.recSize = frameSize();
+  state.recording = true; resize();
+  try {
+    var cs = renderer.domElement.captureStream(30), tracks = cs.getVideoTracks().slice();
+    if (AU.dest) AU.dest.stream.getAudioTracks().forEach(function (t) { tracks.push(t); });
+    REC.mime = pickMime(); REC.chunks = [];
+    REC.rec = new MediaRecorder(new MediaStream(tracks), REC.mime ? { mimeType: REC.mime, videoBitsPerSecond: hq ? 8e6 : 4e6, audioBitsPerSecond: 128000 } : undefined);
+    REC.rec.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
+    REC.rec.onstop = finishRecording;
+    REC.t0 = performance.now(); REC.rec.start(1000);
+  } catch (e) {
+    console.error(e); state.recording = false; resize(); toast('Recording could not start in this browser.'); return false;
+  }
+  syncRecUI(); return true;
+}
+function stopRecording() {
+  if (!state.recording) return;
+  state.recording = false;
+  try { REC.rec.requestData(); REC.rec.stop(); } catch (e) {}
+  resize(); syncRecUI();
+}
+/* MediaRecorder writes a stream with no length in its header, so gallery apps and some players show 0:00.
+   These two functions write the real duration into the file once recording has finished. */
+function put64(dv, o, v) { dv.setUint32(o, Math.floor(v / 4294967296)); dv.setUint32(o + 4, v >>> 0); }
+function fixMp4Duration(buf, sec) {
+  var dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  function kids(s, e) {
+    var out = [], o = s;
+    while (o + 8 <= e) {
+      var sz = dv.getUint32(o), t = String.fromCharCode(buf[o + 4], buf[o + 5], buf[o + 6], buf[o + 7]), h = 8;
+      if (sz === 1) { sz = dv.getUint32(o + 8) * 4294967296 + dv.getUint32(o + 12); h = 16; } else if (sz === 0) sz = e - o;
+      if (sz < h || o + sz > e) break;
+      out.push({ t: t, s: o + h, e: o + sz }); o += sz;
+    }
+    return out;
+  }
+  function find(list, t) { return list.filter(function (b) { return b.t === t; }); }
+  var top = kids(0, buf.length), moov = find(top, 'moov')[0]; if (!moov) return buf;
+  var mk = kids(moov.s, moov.e), mvhd = find(mk, 'mvhd')[0], movieTs = 1000;
+  if (mvhd) {
+    var v1 = buf[mvhd.s] === 1, tsO = mvhd.s + (v1 ? 20 : 12); movieTs = dv.getUint32(tsO) || 1000;
+    if (v1) put64(dv, tsO + 4, Math.round(sec * movieTs)); else dv.setUint32(tsO + 4, Math.round(sec * movieTs));
+  }
+  find(mk, 'trak').forEach(function (tr) {
+    var tk = kids(tr.s, tr.e), tkhd = find(tk, 'tkhd')[0], mdia = find(tk, 'mdia')[0];
+    if (tkhd) { var a = buf[tkhd.s] === 1; if (a) put64(dv, tkhd.s + 28, Math.round(sec * movieTs)); else dv.setUint32(tkhd.s + 20, Math.round(sec * movieTs)); }
+    if (mdia) {
+      var mdhd = find(kids(mdia.s, mdia.e), 'mdhd')[0];
+      if (mdhd) {
+        var b = buf[mdhd.s] === 1, o2 = mdhd.s + (b ? 20 : 12), ts = dv.getUint32(o2) || 1000;
+        if (b) put64(dv, o2 + 4, Math.round(sec * ts)); else dv.setUint32(o2 + 4, Math.round(sec * ts));
+      }
+    }
+  });
+  return buf;
+}
+function fixWebmDuration(buf, sec) {
+  function vint(o) {
+    var f = buf[o], len = 1, m = 0x80; while (len <= 8 && !(f & m)) { m >>= 1; len++; }
+    var v = f & (m - 1), allOnes = (f & (m - 1)) === m - 1;
+    for (var i = 1; i < len; i++) { v = v * 256 + buf[o + i]; if (buf[o + i] !== 255) allOnes = false; }
+    return { len: len, val: v, unknown: allOnes };
+  }
+  function id(o) { var f = buf[o], len = 1, m = 0x80; while (len <= 4 && !(f & m)) { m >>= 1; len++; } var v = 0; for (var i = 0; i < len; i++) v = v * 256 + buf[o + i]; return { len: len, id: v }; }
+  var o = 0, seg = null;
+  while (o < Math.min(buf.length, 64)) {      // EBML header, then the Segment
+    var h = id(o), s = vint(o + h.len);
+    if (h.id === 0x18538067) { seg = { size: o + h.len, sl: s.len, ds: o + h.len + s.len, unknown: s.unknown }; break; }
+    o += h.len + s.len + s.val;
+  }
+  if (!seg) return buf;
+  var p = seg.ds, info = null;
+  while (p < buf.length && p < seg.ds + 4096) {
+    var h2 = id(p), s2 = vint(p + h2.len), ds = p + h2.len + s2.len;
+    if (h2.id === 0x1549A966) { info = { hs: p, sizeAt: p + h2.len, sl: s2.len, ds: ds, de: ds + s2.val }; break; }
+    if (s2.unknown) return buf;
+    p = ds + s2.val;
+  }
+  if (!info) return buf;
+  var scale = 1000000, q = info.ds, dur = null;
+  while (q < info.de) {
+    var h3 = id(q), s3 = vint(q + h3.len), d3 = q + h3.len + s3.len;
+    if (h3.id === 0x2AD7B1) { scale = 0; for (var k = 0; k < s3.val; k++) scale = scale * 256 + buf[d3 + k]; }
+    if (h3.id === 0x4489) dur = { at: d3, len: s3.val };
+    q = d3 + s3.val;
+  }
+  var ticks = sec * 1e9 / scale;
+  if (dur) {
+    var dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    if (dur.len === 8) dv.setFloat64(dur.at, ticks); else if (dur.len === 4) dv.setFloat32(dur.at, ticks);
+    return buf;
+  }
+  // no Duration element: add one at the end of Info, and write Info's size as a full 8-byte number
+  var add = new Uint8Array(11); add[0] = 0x44; add[1] = 0x89; add[2] = 0x88; new DataView(add.buffer).setFloat64(3, ticks);
+  var newSize = (info.de - info.ds) + 11, sz8 = new Uint8Array(8); sz8[0] = 1;
+  for (var j = 7, v = newSize; j >= 1; j--) { sz8[j] = v % 256; v = Math.floor(v / 256); }
+  var delta = 11 + (8 - info.sl), out = new Uint8Array(buf.length + delta);
+  out.set(buf.subarray(0, info.sizeAt), 0); out.set(sz8, info.sizeAt);
+  out.set(buf.subarray(info.ds, info.de), info.sizeAt + 8); out.set(add, info.sizeAt + 8 + (info.de - info.ds));
+  out.set(buf.subarray(info.de), info.sizeAt + 8 + newSize);
+  if (!seg.unknown) {      // a known Segment size has to grow by the same amount
+    var total = 0; for (var n = 0; n < seg.sl; n++) total = total * 256 + buf[seg.size + n];
+    total -= (1 << (7 * 0)) * 0; var mask = Math.pow(2, 7 * seg.sl) - 1;   // strip the length marker
+    var val = (total % Math.pow(2, 7 * seg.sl)) + delta;
+    for (var m2 = seg.sl - 1, vv = val; m2 >= 0; m2--) { out[seg.size + m2] = vv % 256; vv = Math.floor(vv / 256); }
+    out[seg.size] |= (0x80 >> (seg.sl - 1));
+  }
+  return out;
+}
+// the real length of a recording: the player's own figure, or (for webm, which reports Infinity) a seek to the end
+function measureVideo(blob, fallback) {
+  return new Promise(function (res) {
+    var v = document.createElement('video'), u = URL.createObjectURL(blob), done = false;
+    function end(d) { if (done) return; done = true; URL.revokeObjectURL(u); v.removeAttribute('src'); res(isFinite(d) && d > 0 ? d : fallback); }
+    v.preload = 'metadata'; v.muted = true;
+    v.onloadedmetadata = function () { if (isFinite(v.duration) && v.duration > 0) end(v.duration); else { v.ondurationchange = function () { if (isFinite(v.duration)) end(v.duration); }; v.currentTime = 1e7; } };
+    v.onerror = function () { end(fallback); };
+    setTimeout(function () { end(fallback); }, 4000);
+    v.src = u;
+  });
+}
+async function finishRecording() {
+  if (!REC.chunks.length) return;
+  var blob = new Blob(REC.chunks, { type: (REC.mime || 'video/webm').split(';')[0] });
+  try {
+    var wall = (performance.now() - REC.t0) / 1000, sec = await measureVideo(blob, wall);
+    var bytes = new Uint8Array(await blob.arrayBuffer());
+    bytes = blob.type.indexOf('mp4') >= 0 ? fixMp4Duration(bytes, sec) : fixWebmDuration(bytes, sec);
+    blob = new Blob([bytes], { type: blob.type }); REC.sec = sec;
+  } catch (e) { console.error(e); }
+  if (REC.url) URL.revokeObjectURL(REC.url);
+  REC.blob = blob; REC.url = URL.createObjectURL(blob);
+  var pl = $('#recPlayer'); pl.preload = 'metadata'; pl.src = REC.url; $('#recResult').hidden = false;
+  $('#recMeta').textContent = fmtT(Math.round(REC.sec || (performance.now() - REC.t0) / 1000)) + ' - ' + (blob.size / 1048576).toFixed(1) + ' MB';
+  toast('Recording ready. Preview it in the Studio tab.');
+}
+function syncRecUI() {
+  $('#btnRec').textContent = state.recording ? 'Stop recording' : 'Record what I do';
+  $('#btnRec').disabled = state.shooting;
+  $('#recInfo').textContent = state.recording ? 'Recording at ' + state.recSize[0] + 'x' + state.recSize[1] : '';
+}
+async function saveVideo() {
+  if (!REC.blob) return;
+  var dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) {}
+  if (!dl) { toast('Saving is not available in this view. Use the player menu to download the video.'); return; }
+  var ext = REC.blob.type.indexOf('mp4') >= 0 ? '.mp4' : '.webm';
+  try { await dl.save({ filename: 'print-room-shoot' + ext, data: REC.blob }); toast('Video saved.'); }
+  catch (e) { if (e && e.code === 'declined') return; toast('The video could not be saved.'); }
+}
+
+/* the director */
+function shootCfg() {
+  var n = state.doc ? state.doc.n : 6;
+  return {
+    pages: clamp(parseInt($('#shPages').value, 10) || 1, 1, 36), speed: +$('#shSpeed').value,
+    sel: parseRange($('#shPrint').value, n), staple: state.staple,
+    style: $('#shStyle').value, shake: $('#shShake').checked, record: $('#shRec').checked
+  };
+}
+function updateEst() {
+  var c = shootCfg(), M = docMetrics(), n = c.sel.size;
+  var D = Math.max(3, M.at(c.pages) / c.speed);
+  var per = n <= 8 ? 1.5 : n <= 20 ? 0.9 : 0.55, f = per >= 1.4 ? 1.1 : 0.5;
+  var print = n * (f + per + 0.18), bund = n * (n > 20 ? 0.3 : 0.62) + 0.8 + (c.staple === 'corner' ? 1 : 1.9) + 3.4;
+  var total = 3.6 + D + 1.6 + print + 0.9 + bund + 0.6 + 6.4 + 15 + (c.style === 'fly' ? 7 : 0);
+  $('#shEst').textContent = n ? 'Estimated length ' + fmtDur(total) + '.' : 'Enter the pages to print, for example 1-3.';
+  $('#btnShoot').disabled = !n || state.shooting;
+}
+function shootLabel(s) { $('#shootLabel').textContent = s; }
+async function runShoot() {
+  if (state.shooting) return;
+  if (state.busy) { toast('Wait until the current job has finished.'); return; }
+  if (!state.doc) useSample();
+  var cfg = shootCfg();
+  if (!cfg.sel.size) { toast('Enter the pages to print, for example 1-3.'); return; }
+  var doc = state.doc, M = docMetrics();
+  var saved = { loop: state.loop, playing: state.playing, speed: state.speed };
+  state.sel = cfg.sel; state.staple = cfg.staple; syncSel(); syncStaple();
+  state.recSize = frameSize();
+  state.shooting = true; state.abort = false; shootT0 = performance.now();
+  abortP = new Promise(function (r) { abortRes = r; });
+  document.body.classList.add('shooting'); audioInit();
+  var startedRec = cfg.record && !state.recording ? startRecording() : false;
+  layoutView(); resize();
+  setStatus('Shooting', true); syncRecUI(); updateEst();
+  rigStart(); shootStyle = cfg.style; rig.shake = cfg.shake;
+  try {
+    state.mode = 'doc'; stopVideo(); state.playing = false; state.scrollY = 0; state.loop = false; state.endHold = 0; state.speed = cfg.speed;
+    syncPlay(); showControls();
+    var fl = shootStyle === 'cut' ? 0 : 1.4;
+
+    shootLabel('Establishing shot');
+    await A(shot({ t0: [0.3, 1.0, -1.6], r: [6.6, 5.4], az: [0.6, 0.28], h: [1.6, 1.25], fov: [45, 40], dur: 3.6, cut: true }));
+
+    shootLabel('Scrolling the document');
+    var target = M.at(cfg.pages), D = Math.max(3, target / cfg.speed);
+    var started = false; state.endHold = 0;
+    var scrolled = until(function () { return started && (state.scrollY >= target - 1 || !state.playing); }).then(function () { state.playing = false; });
+    var camWork = (async function () {
+      await shot({ t0: [MON.x, 1.28, MON.z], r: [2.5, 1.5], az: [0.55, 0.14], h: [0.4, 0.12], fov: [45, 38], dur: Math.max(1.5, D * 0.55 - fl), tight: true, third: -0.7, onArrive: function () { started = true; state.playing = true; } });
+      await shot({ t0: [MON.x, 1.28, MON.z], r: [1.1, 0.88], az: [-0.1, 0.05], h: [0.1, 0.06], fov: [40, 34], dur: Math.max(1.5, D * 0.45 - fl), tight: true });
+    })();
+    await A(Promise.all([scrolled, camWork]));
+    await A(sleep(400));
+
+    shootLabel('Printing');
+    var n = Array.from(state.sel).filter(function (i) { return doc.pages[i]; }).length;
+    var per = n <= 8 ? 1.5 : n <= 20 ? 0.9 : 0.55, f1 = per >= 1.4 ? 0.8 : 0.35, f2 = per >= 1.4 ? 0.3 : 0.15, feedTot = f1 + f2;
+    var firstOut = waitPhase('print:first-out'), printP = null;
+    shot({ t0: [PRINTER.x, DY + 0.34, PRINTER.z - 0.1], r: [1.2, 0.85], az: [0.95, 0.6], h: [0.55, 0.42], fov: [45, 36], dur: feedTot + 0.5, follow: followSheet, fw: 0.55, third: 0.8, onArrive: function () { printP = doPrint(); } });
+    await A(firstOut);
+    var printT = n * (per + feedTot + 0.18) - feedTot, frontT = Math.max(1.6, printT * 0.4);
+    shot({ t0: [PRINTER.x, DY + 0.1, PRINTER.z + 0.38], r: [1.25, 0.95], az: [-0.6, -0.2], h: [0.6, 0.4], dur: frontT, follow: followSheet, fw: 0.45, third: -0.8 });
+    await A(Promise.race([sleep(frontT * 1000), printP]));
+    if (state.phase !== 'print:done') {
+      // close in from above on the sheets as they land, so the printed pages can be read
+      shootLabel('Printed pages');
+      shot({ t0: [PRINTER.x, TRAY_Y + 0.01, PRINTER.z + 0.36], r: [0.22, 0.16], az: [0.25, 0.05], h: [0.9, 0.62], fov: [38, 30], tight: true, dur: Math.max(2, printT - frontT), follow: followSheet, fw: 0.3 });
+    }
+    await A(printP);
+    if (state.phase === 'print:done') shot({ t0: [PRINTER.x, TRAY_Y + 0.01, PRINTER.z + 0.36], r: [0.2, 0.15], az: [0.1, 0.0], h: [0.78, 0.6], fov: [34, 28], tight: true, dur: 3.5 });
+    await A(sleep(2200));
+
+    shootLabel('Collating');
+    var nb = state.tray.length, collT = nb * (nb > 20 ? 0.3 : 0.62) + 0.8;
+    var onStaple = waitPhase('bundle:staple'), onDeliver = waitPhase('bundle:deliver');
+    var bundleP = null;
+    shot({ t0: [BUNDLER.x - 0.05, 0.95, BUNDLER.z + 0.1], r: [1.7, 1.2], az: [0.75, 0.4], h: [1.0, 0.75], dur: collT + 0.6, follow: followStack, fw: 0.4, third: 0.6, onArrive: function () { bundleP = doBundle(); } });
+    await A(onStaple);
+    shootLabel('Stapling');
+    shot({ t0: [BUNDLER.x - 0.1, 0.97, BUNDLER.z], r: [0.9, 0.62], az: [0.5, 0.25], h: [0.6, 0.42], fov: [45, 32], tight: true, dur: (state.staple === 'corner' ? 1 : 2) * 0.95 + 0.9 });
+    await A(onDeliver);
+    shootLabel('Delivering the bundle');
+    shot({ t0: [BUNDLER.x - 0.05, 0.62, BUNDLER.z + 0.42], r: [1.6, 1.35], az: [0.9, 1.1], h: [0.85, 0.7], dur: 3, fly: 1.2, follow: followStack, fw: 0.85, third: -0.5 });
+    await A(bundleP);
+    await A(sleep(500));
+
+    shootLabel('Inside the bin');
+    shot({ t0: [BUNDLER.x + STACK0.x, BIN_FLOOR + 0.05 + state.binH, BUNDLER.z + 0.57], r: [0.3, 0.2], az: [0.4, 0.1], h: [0.85, 0.62], fov: [38, 30], tight: true, dur: 3 });
+    await A(sleep(2800));
+    shootLabel('The finished bundle');
+    var lastB = state.bundles[state.bundles.length - 1], showW = bundlerG.localToWorld(SHOW_POS.clone());
+    var insp = null;
+    shot({ t0: [showW.x, showW.y, showW.z], r: [1.05, 0.62], az: [0.4, -0.05], h: [0.6, 0.3], fov: [38, 30], tight: true, third: 0.3, dur: 9, fly: 1.6, follow: followStack, fw: 0.9, onArrive: function () { insp = inspectBundle(lastB); } });
+    await A(until(function () { return insp !== null; }));
+    await A(insp);
+    await A(sleep(600));
+
+    shootLabel('Wrap shot');
+    await A(shot({ t0: [0.6, 1.0, -1.4], r: [3.2, 6.6], az: [0.15, -0.3], h: [0.8, 1.7], fov: [38, 46], dur: 5 }));
+    await A(sleep(400));
+  } catch (e) {
+    if (e !== ABORT) console.error(e);
+  } finally {
+    rig.token++; rigEnd();
+    document.body.classList.remove('shooting'); state.shooting = false;
+    if (startedRec) stopRecording();
+    state.loop = saved.loop; state.speed = saved.speed; state.playing = saved.playing; syncPlay();
+    setStatus(state.busy ? 'Finishing the last job' : 'Ready', state.busy);
+    resize(); syncRecUI(); updateEst(); showTab('studio');
+  }
+}
+
+/* studio controls */
+function syncStaple() { $$('.stapleSeg button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.staple === state.staple ? 'true' : 'false'); }); }
+$$('.stapleSeg button').forEach(function (b) { b.addEventListener('click', function () { state.staple = b.dataset.staple; syncStaple(); updateEst(); }); });
+['#shPages', '#shPrint', '#shSpeed', '#shStyle'].forEach(function (s) { $(s).addEventListener('input', function () { $('#shSpeedOut').textContent = $('#shSpeed').value + ' px/s'; updateEst(); }); });
+$('#btnShoot').addEventListener('click', runShoot);
+$('#btnStop').addEventListener('click', function () { state.abort = true; if (abortRes) abortRes(); });
+$('#btnRec').addEventListener('click', function () { if (state.recording) stopRecording(); else startRecording(); });
+$('#btnSave').addEventListener('click', saveVideo);
+$('#btnSound').addEventListener('click', function () {
+  AU.on = !AU.on; audioInit();
+  if (AU.master) AU.master.gain.value = AU.on ? AU.vol : 0;
+  this.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); this.textContent = AU.on ? 'Sound on' : 'Sound off';
+  if (AU.on) SFX.ding();
+});
+window.addEventListener('pointerdown', audioInit, { passive: true });
+window.addEventListener('keydown', audioInit);
+document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('button')) SFX.click(); });
+setInterval(function () {
+  var rb = $('#recBadge');
+  if (state.recording) { rb.hidden = false; rb.textContent = 'REC ' + fmtT((performance.now() - REC.t0) / 1000); } else rb.hidden = true;
+  if (state.shooting) $('#shootTime').textContent = fmtT((performance.now() - shootT0) / 1000);
+}, 250);
+updateEst();
+
+/* ---------- main loop ---------- */
+var last = performance.now(), t0 = last, sz2 = new THREE.Vector2(), lastRender = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  var dt = Math.min(0.1, (now - last) / 1000); last = now;
+  stepTweens(now);
+  drawScreen(dt, now);
+  if (state.busy && pLed.material.color.getHex() === 0xffb020) pLed.visible = Math.floor(now / 250) % 2 === 0; else pLed.visible = true;
+  if (state.shooting) {
+    var c = rig.cur, snap = rig.snap; rig.snap = false;
+    var kp = snap ? 1 : 1 - Math.exp(-dt * 5), kt = snap ? 1 : 1 - Math.exp(-dt * 6.5), kf = snap ? 1 : 1 - Math.exp(-dt * 5);
+    c.pos.lerp(rig.pos, kp); c.tgt.lerp(rig.tgt, kt); c.fov += (rig.fov - c.fov) * kf;
+    c.pos.x = clamp(c.pos.x, -3.9, 3.9); c.pos.y = clamp(c.pos.y, 0.3, 7); c.pos.z = clamp(c.pos.z, -2.0, 7.5);
+    var sh = rig.shake ? shakeVec(now) : null, look = c.tgt.clone();
+    camera.position.copy(c.pos);
+    if (sh) { camera.position.add(sh); look.addScaledVector(sh, 0.5); }
+    camera.lookAt(look);
+    if (sh) camera.rotateZ(sh.roll);
+    var fv = c.fov + (sh ? sh.fov : 0);
+    if (Math.abs(camera.fov - fv) > 0.005) { camera.fov = fv; camera.updateProjectionMatrix(); }
+    rig.thirdCur += (rig.third - rig.thirdCur) * (1 - Math.exp(-dt * 2));
+    if (Math.abs(rig.thirdCur) > 0.003) { renderer.getSize(sz2); camera.setViewOffset(sz2.x, sz2.y, -rig.thirdCur * 0.1 * sz2.x, 0, sz2.x, sz2.y); }
+    else if (camera.view && camera.view.enabled) camera.clearViewOffset();
+  } else controls.update();
+  // while recording, render at a steady 30 fps (the speed the video is captured at) so frames are never half-drawn or doubled
+  if ((state.recording || state.shooting) && now - lastRender < 31) return;
+  lastRender = now;
+  renderer.render(scene, camera);
+}
+
+/* ---------- start ---------- */
+resize();
+var v0 = viewFor('room'); camera.position.copy(v0.p); controls.target.copy(v0.t); controls.update();
+showTab('room');
+if (isPhone()) setCollapsed(true);
+useSample();
+requestAnimationFrame(frame);
+window.addEventListener('resize', resize);
+})();
+</script>
+
+</body>
+</html>
