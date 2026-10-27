@@ -112,6 +112,11 @@ select,input[type=number]{font:500 13px var(--body);color:var(--ink);background:
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #recPlayer{width:100%;border-radius:8px;background:#000;aspect-ratio:16/9;display:block}
 hr{border:0;border-top:1px solid var(--line);margin:0}
+#btnShoot{position:sticky;bottom:4px;z-index:2;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+details.fx{border:1px solid var(--line);border-radius:10px;padding:0 12px;background:color-mix(in srgb,var(--field) 55%,transparent)}
+details.fx>summary{cursor:pointer;font:600 13px var(--body);padding:10px 0;min-height:40px;display:flex;align-items:center}
+details.fx[open]{padding-bottom:12px;display:flex;flex-direction:column;gap:12px}
+details.fx[open]>summary{padding-bottom:0}
 #shootbar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:12;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);max-width:calc(100% - 32px)}
 body.shooting #shootbar{display:flex}
 body.shooting #panel,body.shooting #views{display:none}
@@ -255,6 +260,7 @@ button,.thumb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 
       <section data-tab="studio" hidden>
         <p class="lead">Set up a shoot and the camera crew does the rest: scroll, print, collate, staple, with changing angles and slow zooms.</p>
+        <label class="fld" for="shRecipe"><span class="lab">Recipe</span><select id="shRecipe"><option value="custom">Custom, my own settings</option><option value="asmr">Satisfying, slow close-ups</option><option value="explainer">Fast explainer, hard cuts</option><option value="cinematic">Cinematic, smooth and wide</option><option value="hook">Pattern-interrupt hook</option></select></label>
         <div class="grid2">
           <label class="fld" for="shPages"><span class="lab">Pages to scroll</span><input type="number" id="shPages" min="1" max="36" value="3"></label>
           <label class="fld" for="shPrint"><span class="lab">Pages to print</span><input type="text" id="shPrint" value="1-3" autocomplete="off" spellcheck="false"></label>
@@ -272,6 +278,37 @@ button,.thumb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
           <label class="fld" for="recO"><span class="lab">Frame</span><select id="recO"><option value="h">Horizontal 16:9</option><option value="v">Vertical 9:16</option><option value="s">Square 1:1</option></select></label>
         </div>
         <label class="fld" for="recQ"><span class="lab">Video size</span><select id="recQ"><option value="720">720p, smaller file</option><option value="1080">1080p, sharper</option></select></label>
+        <details class="fx">
+          <summary>Look and variety</summary>
+          <div class="grid2">
+            <label class="fld" for="shLook"><span class="lab">Room look</span><select id="shLook"><option value="studio">Studio</option><option value="morning">Morning light</option><option value="golden">Golden hour</option><option value="night">Night, desk lamp</option><option value="neon">Neon</option><option value="mint">Pastel mint</option></select></label>
+            <label class="fld" for="shPaper"><span class="lab">Paper</span><select id="shPaper"><option value="white">White</option><option value="cream">Cream</option><option value="blue">Light blue</option><option value="pink">Pink</option><option value="yellow">Yellow</option><option value="mint">Mint</option></select></label>
+          </div>
+          <label class="fld" for="shOpen"><span class="lab">Opening shot</span><select id="shOpen"><option value="auto">Auto, varies each shoot</option><option value="wide">Wide room</option><option value="drone">Overhead drop</option><option value="macro">Screen close-up, pulling back</option><option value="low">Low rise over the desk</option></select></label>
+          <div class="row">
+            <label class="chk" for="shVary"><input type="checkbox" id="shVary" checked> Vary angles every shoot</label>
+            <label class="chk" for="shRandLook"><input type="checkbox" id="shRandLook"> Random look each shoot</label>
+          </div>
+          <label class="fld" for="shSeed"><span class="lab">Variation number</span><input type="number" id="shSeed" min="1" max="999999" placeholder="Random" inputmode="numeric"></label>
+          <p class="meta" id="shSeedInfo">Empty gives a new camera plan every time. Type a number to repeat one you liked.</p>
+        </details>
+        <details class="fx">
+          <summary>Captions</summary>
+          <label class="fld" for="capHook"><span class="lab">Hook text, first seconds</span><input type="text" id="capHook" maxlength="80" placeholder="Watch this PDF become a book" autocomplete="off"></label>
+          <label class="fld" for="capOutro"><span class="lab">Closing text</span><input type="text" id="capOutro" maxlength="80" placeholder="Follow for more" autocomplete="off"></label>
+          <div class="grid2">
+            <label class="fld" for="capStyle"><span class="lab">Style</span><select id="capStyle"><option value="pill">Dark pill</option><option value="bold">Bold outline</option><option value="mark">Highlighter</option></select></label>
+            <label class="chk" for="capSteps" style="align-self:end"><input type="checkbox" id="capSteps"> Step captions</label>
+          </div>
+          <p class="meta">Captions are burned into the video, placed clear of the top and bottom strips that Reels and Shorts cover.</p>
+        </details>
+        <details class="fx">
+          <summary>Sound sync</summary>
+          <p class="meta">The sound in the video is delayed a little so it lines up with the picture. Auto-sync measures it on this device.</p>
+          <label class="fld" for="shSync"><span class="lab">Sound delay <output id="shSyncOut">120 ms</output></span><input type="range" id="shSync" min="0" max="500" step="5" value="120"></label>
+          <div class="row"><button type="button" class="btn" id="btnCal">Auto-sync sound</button></div>
+          <p class="meta" id="calInfo"></p>
+        </details>
         <div class="row">
           <label class="chk" for="shShake"><input type="checkbox" id="shShake" checked> Handheld motion</label>
           <label class="chk" for="shRec"><input type="checkbox" id="shRec" checked> Record video</label>
@@ -410,8 +447,9 @@ function stepTweens(now) {
 }
 
 /* ---------- sound: everything is synthesised with Web Audio ---------- */
-var AU = { ctx: null, master: null, dest: null, noise: null, on: true, vol: 0.9 };
+var AU = { ctx: null, master: null, dest: null, rd: null, noise: null, on: true, vol: 0.9, sync: 0 };   // sync: ms of delay on the recorded sound only
 var tickAcc = 0;
+try { var sv = parseInt(localStorage.getItem('printroom-sync'), 10); AU.sync = isFinite(sv) ? clamp(sv, 0, 500) : 120; } catch (e) { AU.sync = 120; }
 function audioInit() {
   if (AU.ctx) { if (AU.ctx.state === 'suspended') AU.ctx.resume(); return AU.ctx; }
   var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
@@ -419,13 +457,14 @@ function audioInit() {
     var ctx = new C(); AU.ctx = ctx;
     AU.master = ctx.createGain(); AU.master.gain.value = AU.on ? AU.vol : 0;
     var comp = ctx.createDynamicsCompressor(); AU.master.connect(comp); comp.connect(ctx.destination);
-    AU.dest = ctx.createMediaStreamDestination(); comp.connect(AU.dest);
+    // the recording gets its sound through a delay, so it can be lined up exactly with the captured pictures
+    AU.dest = ctx.createMediaStreamDestination(); AU.rd = ctx.createDelay(1); AU.rd.delayTime.value = AU.sync / 1000; comp.connect(AU.rd); AU.rd.connect(AU.dest);
     var b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
     for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     AU.noise = b;
     try { // the uploaded video keeps its own sound; it is not affected by the effects toggle
       var vs = ctx.createMediaElementSource(video), vg = ctx.createGain();
-      vs.connect(vg); vg.connect(ctx.destination); vg.connect(AU.dest);
+      vs.connect(vg); vg.connect(ctx.destination); vg.connect(AU.rd);
     } catch (e) {}
     if (ctx.state === 'suspended') ctx.resume();
   } catch (e) { AU.ctx = null; }
@@ -482,11 +521,37 @@ function inkBuild(c, out) {
   var n = c.createBufferSource(); n.buffer = AU.noise; n.loop = true;
   var f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2600; f.Q.value = 1.2;
   var sw = c.createOscillator(); sw.frequency.value = 5; var sg2 = c.createGain(); sg2.gain.value = 900; sw.connect(sg2); sg2.connect(f.frequency);
-  var g = c.createGain(); g.gain.value = 0.05;
-  var am = c.createOscillator(); am.frequency.value = 34; var ag = c.createGain(); ag.gain.value = 0.04; am.connect(ag); ag.connect(g.gain);
+  var g = c.createGain(); g.gain.value = 0.022;
+  var am = c.createOscillator(); am.frequency.value = 34; var ag = c.createGain(); ag.gain.value = 0.015; am.connect(ag); ag.connect(g.gain);
   n.connect(f); f.connect(g); g.connect(out); n.start(); sw.start(); am.start(); return [n, sw, am];
 }
+/* A driven sound is a continuous noise or tone whose loudness and pitch are set from the animation itself,
+   frame by frame, so it speeds up, slows down and stops exactly when the thing on screen does. */
+function driveNoise(q) {
+  if (!aOn()) return { set: function () {}, stop: function () {} };
+  var c = AU.ctx, s = c.createBufferSource(); s.buffer = AU.noise; s.loop = true;
+  var f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = q || 0.6; f.frequency.value = 1000;
+  var g = c.createGain(); g.gain.value = 0; s.connect(f); f.connect(g); g.connect(AU.master); s.start(0, Math.random() * 1.5);
+  return {
+    set: function (level, freq) { var t = c.currentTime; g.gain.setTargetAtTime(level, t, 0.012); if (freq) f.frequency.setTargetAtTime(freq, t, 0.02); },
+    stop: function () { var t = c.currentTime; g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.015); setTimeout(function () { try { s.stop(); } catch (e) {} }, 160); }
+  };
+}
+function driveTone(type) {
+  if (!aOn()) return { set: function () {}, stop: function () {} };
+  var c = AU.ctx, o = c.createOscillator(); o.type = type || 'sawtooth'; o.frequency.value = 200;
+  var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+  var g = c.createGain(); g.gain.value = 0; o.connect(lp); lp.connect(g); g.connect(AU.master); o.start();
+  return {
+    set: function (level, freq) { var t = c.currentTime; g.gain.setTargetAtTime(level, t, 0.012); if (freq) o.frequency.setTargetAtTime(freq, t, 0.02); },
+    stop: function () { var t = c.currentTime; g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0, t, 0.015); setTimeout(function () { try { o.stop(); } catch (e) {} }, 160); }
+  };
+}
+// speed of ease.io (0..1) at progress u, so a motor can follow how fast the part is really moving
+function velIO(u) { var d = u < 0.5 ? 12 * u * u : 12 * (1 - u) * (1 - u); return d / 3; }
 var SFX = {
+  pass: function (dir, g) { aNoise({ type: 'bandpass', f0: dir > 0 ? 2300 : 4300, f1: dir > 0 ? 4300 : 2300, q: 1.4, dur: 0.06, gain: 0.1 * (g || 1) }); aNoise({ type: 'lowpass', f0: 900, dur: 0.02, gain: 0.07 * (g || 1) }); },
+  knock: function (g, d) { aNoise({ type: 'bandpass', f0: 1700, q: 2.5, dur: 0.03, gain: 0.26 * g, delay: d }); aTone({ f0: 240, f1: 110, dur: 0.04, gain: 0.07 * g, delay: d }); },
   click: function () { aTone({ type: 'square', f0: 1900, f1: 1100, dur: 0.03, gain: 0.03 }); },
   tick: function () { aNoise({ type: 'bandpass', f0: 3600, q: 2, dur: 0.012, gain: 0.05 }); },
   ding: function () { aTone({ f0: 880, dur: 0.3, gain: 0.1 }); aTone({ f0: 1320, dur: 0.45, gain: 0.08, delay: 0.09 }); },
@@ -507,7 +572,7 @@ var SFX = {
 };
 
 /* ---------- lights ---------- */
-scene.add(new THREE.HemisphereLight(0xeaf2f8, 0x8d7355, 0.62));
+var hemi = new THREE.HemisphereLight(0xeaf2f8, 0x8d7355, 0.62); scene.add(hemi);
 var sun = new THREE.DirectionalLight(0xfff3e2, 0.78);
 sun.position.set(-3.4, 4.4, 3.2);
 sun.target.position.set(0.2, 0.6, -1.4);
@@ -520,6 +585,7 @@ scene.add(sun); scene.add(sun.target);
 var screenGlow = new THREE.PointLight(0x9fd2ff, 0.4, 2.2);
 screenGlow.position.set(-1.5, 1.35, -1.3);
 scene.add(screenGlow);
+var lampLight = new THREE.PointLight(0xffb066, 0, 3.4); lampLight.position.set(-2.16, 1.22, -1.95); scene.add(lampLight);   // the desk lamp, lit in some looks
 
 /* ---------- materials ---------- */
 var M = {
@@ -754,12 +820,12 @@ var L0 = 0.06;
 function setRam(L) { ram.scale.y = L; pad.position.y = -0.06 - L; }
 setRam(L0);
 function moveHead(x, reach, sec) {
-  SFX.servo(sec, 300, 520, 0.35);
-  var x0 = carriage.position.x, r0 = headG.position.z;
-  return tween(sec, function (e) {
+  var x0 = carriage.position.x, r0 = headG.position.z, mt = driveTone('sawtooth');
+  return tween(sec, function (e, u) {
     carriage.position.x = x0 + (x - x0) * e;
     var r = r0 + (reach - r0) * e; headG.position.z = r; arm.scale.z = Math.max(0.02, r);
-  });
+    var v = velIO(u); mt.set(0.012 + 0.03 * v, 140 + 380 * v);
+  }).then(function () { mt.stop(); });
 }
 
 /* ---------- LCDs ---------- */
@@ -777,18 +843,42 @@ printerLcd(['READY', 'TRAY EMPTY']);
 bundlerLcd(['READY', 'NO SHEETS']);
 setRack(A4);
 
+/* ---------- looks: the same room in different light, colours and paper ---------- */
+var LOOKS = {
+  studio:  { wall: 0xd9dfe4, wall2: 0xcdd5dc, desk: 0xd8bb90, floor: 0xffffff, rug: [0x36566a, 0x44687e], hemi: [0xeaf2f8, 0x8d7355, 0.62], sun: [0xfff3e2, 0.78, [-3.4, 4.4, 3.2]], acc: 0xefa800, acc2: 0x0a9db8, glow: [0x9fd2ff, 0.4], lamp: 0 },
+  morning: { wall: 0xeee4d3, wall2: 0xe2d6c2, desk: 0xe8d2a8, floor: 0xfff4e6, rug: [0x7a9a82, 0x8fb095], hemi: [0xfff1dc, 0xa08a6a, 0.55], sun: [0xffe6bf, 1.05, [-4, 2.6, 2.2]], acc: 0xe0782a, acc2: 0x2a9d8f, glow: [0xfff0d0, 0.25], lamp: 0 },
+  golden:  { wall: 0xf0dcc4, wall2: 0xe6c9a8, desk: 0xcf9a5e, floor: 0xffe2c4, rug: [0x8a4b3c, 0xa35d49], hemi: [0xffd9b0, 0x7a5a40, 0.45], sun: [0xff9d4d, 1.1, [-4.1, 1.7, 1.4]], acc: 0xc8553d, acc2: 0xefa800, glow: [0xffc080, 0.3], lamp: 0.4 },
+  night:   { wall: 0x39465a, wall2: 0x303b4d, desk: 0x8a6a48, floor: 0x8a8f99, rug: [0x1f2a3a, 0x2b3a50], hemi: [0x6a7fa8, 0x20242c, 0.38], sun: [0x9db4ff, 0.2, [-3.4, 4.4, 3.2]], acc: 0xefa800, acc2: 0x4fc6e0, glow: [0x9fd2ff, 1.2], lamp: 1.6 },
+  neon:    { wall: 0x24153f, wall2: 0x1c1034, desk: 0x4a3a66, floor: 0x6a5a90, rug: [0x3a1a5a, 0x5a2a7a], hemi: [0x8a6cff, 0x2a1a44, 0.5], sun: [0xff7fcf, 0.35, [-3, 4, 3]], acc: 0xff3d9a, acc2: 0x00e5ff, glow: [0x00e5ff, 1.3], lamp: 1.4, lampC: 0xff4fb0 },
+  mint:    { wall: 0xd6efe5, wall2: 0xc6e4d8, desk: 0xf2dcb4, floor: 0xffffff, rug: [0xf2a7a0, 0xf7bdb6], hemi: [0xffffff, 0xb9c7bd, 0.7], sun: [0xffffff, 0.8, [-3.4, 4.4, 3.2]], acc: 0x2fa39a, acc2: 0xf2a7a0, glow: [0xbfe9ff, 0.3], lamp: 0 }
+};
+function applyLook(name) {
+  var L = LOOKS[name] || LOOKS.studio;
+  M.wall.color.setHex(L.wall); M.wall2.color.setHex(L.wall2); M.birch.color.setHex(L.desk);
+  floor.material.color.setHex(L.floor); rug.material.color.setHex(L.rug[0]); rug2.material.color.setHex(L.rug[1]);
+  hemi.color.setHex(L.hemi[0]); hemi.groundColor.setHex(L.hemi[1]); hemi.intensity = L.hemi[2];
+  sun.color.setHex(L.sun[0]); sun.intensity = L.sun[1]; sun.position.set(L.sun[2][0], L.sun[2][1], L.sun[2][2]);
+  M.yellow.color.setHex(L.acc); M.cyan.color.setHex(L.acc2);
+  screenGlow.color.setHex(L.glow[0]); screenGlow.intensity = L.glow[1];
+  lampLight.intensity = L.lamp; lampLight.color.setHex(L.lampC || 0xffb066);
+  state.look = name;
+}
+var PAPERS = { white: '#ffffff', cream: '#fbf1d4', blue: '#d6e8ff', pink: '#ffdfe9', yellow: '#fff3a8', mint: '#d6f5e4' };
+var PAPER = '#ffffff';
+function setPaper(k) { PAPER = PAPERS[k] || PAPERS.white; if (rackReam) rackReam.material.color.set(PAPER); }
+
 /* ---------- sheets ---------- */
 function makeSheet(pageCanvas, pageIdx, dim) {
   dim = dim || A4;
   var asp = dim.l / dim.w, W = asp >= 1 ? Math.round(720 / asp) : 720, H = asp >= 1 ? 720 : Math.round(720 * asp);
-  var cv = newCanvas(W, H), g = cv.getContext('2d');
-  g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+  var cv = newCanvas(W, H), g = cv.getContext('2d'), paper = PAPER;
+  g.fillStyle = paper; g.fillRect(0, 0, W, H);
   var t = new THREE.CanvasTexture(cv); t.anisotropy = 4;
   // Each sheet has its own clip plane. It starts far away (no clipping) so the blank sheet is visible
   // on the paper rack, and moves to the printer's front face once the sheet is inside the printer.
   var cp = new THREE.Plane(new THREE.Vector3(0, 0, 1), 100);
   var top = new THREE.MeshStandardMaterial({ map: t, roughness: 0.92, clippingPlanes: [cp] });
-  var edge = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.95, clippingPlanes: [cp] });
+  var edge = new THREE.MeshStandardMaterial({ color: new THREE.Color(paper).multiplyScalar(0.95), roughness: 0.95, clippingPlanes: [cp] });
   var mesh = new THREE.Mesh(new THREE.BoxGeometry(dim.w, ST, dim.l), [edge, edge, top, edge, edge, edge]);
   mesh.castShadow = true; mesh.receiveShadow = true;
   var group = new THREE.Group(); group.add(mesh);
@@ -796,8 +886,11 @@ function makeSheet(pageCanvas, pageIdx, dim) {
     group: group, page: pageIdx, dim: dim, landing: null, rot: 0, cp: cp,
     reveal: function (f) {
       f = clamp(f, 0, 1);
-      g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
-      if (f > 0) { var sh = pageCanvas.height * f; g.drawImage(pageCanvas, 0, pageCanvas.height - sh, pageCanvas.width, sh, 0, H - H * f, W, H * f); }
+      g.fillStyle = paper; g.fillRect(0, 0, W, H);
+      if (f > 0) {
+        var sh = pageCanvas.height * f; g.drawImage(pageCanvas, 0, pageCanvas.height - sh, pageCanvas.width, sh, 0, H - H * f, W, H * f);
+        if (paper !== '#ffffff') { g.globalCompositeOperation = 'multiply'; g.fillStyle = paper; g.fillRect(0, H - H * f, W, H * f); g.globalCompositeOperation = 'source-over'; }   // printed on coloured stock
+      }
       if (f >= 1) { g.fillStyle = 'rgba(90,100,110,.8)'; g.font = '15px Helvetica,Arial,sans-serif'; g.textAlign = 'right'; g.fillText('PRINT ROOM  p.' + (pageIdx + 1), W - 14, 22); g.textAlign = 'left'; }
       t.needsUpdate = true;
     },
@@ -831,22 +924,27 @@ async function printSheet(page, idx, dur, onPrint, dim) {
   // 1. a blank sheet is pulled off the stack and slides down the rack into the printer
   sh.group.position.copy(A); sh.group.rotation.x = RACK_TILT;
   scene.add(sh.group);
-  SFX.scrape(f1 + f2, 1100, 2400, 0.16);
-  await tween(f1, function (e) { sh.group.position.lerpVectors(A, B, e); }, ease.inn);
+  var slide = driveNoise(0.6);      // the scrape follows the sheet's real speed down the rack
+  await tween(f1, function (e, u) { sh.group.position.lerpVectors(A, B, e); slide.set(0.03 + 0.17 * u, 1000 + 1500 * u); }, ease.inn);
   // 2. inside the printer it turns flat and lines up with the output slot
-  await tween(f2, function (e) {
+  SFX.thud(0.25, 0);
+  await tween(f2, function (e, u) {
     sh.group.position.lerpVectors(B, C, e);
     sh.group.rotation.x = RACK_TILT * (1 - e);
+    slide.set(0.12 * (1 - u), 2400 - 1200 * u);
   });
+  slide.stop();
   sh.group.rotation.x = 0;
   sh.cp.constant = -zSlot;
   if (onPrint) onPrint();
   // 3. it is printed as it comes out of the slot
-  var ink = SFX.inkjet();
+  // The page is printed in bands. Each time the paper has moved on by one band, the print head makes one pass:
+  // the sound and the new band of ink appear in the same frame.
+  var ink = SFX.inkjet(), N = clamp(Math.round(dur * 9), 5, 18), band = 0, dirP = 1;
   await tween(dur, function (e) {
-    var z = z0 + (z1 - z0) * e;
+    var z = z0 + (z1 - z0) * e, expo = clamp((z + SL / 2 - zSlot) / SL, 0, 1), nb = Math.min(N, Math.floor(expo * N) + 1);
     sh.group.position.z = z;
-    sh.reveal((z + SL / 2 - zSlot) / SL);
+    if (nb !== band) { band = nb; SFX.pass(dirP); dirP = -dirP; sh.reveal(band / N); }
   }, ease.lin);
   ink.stop(); SFX.slap(0.7);
   sh.reveal(1);
@@ -970,8 +1068,9 @@ async function doBundle() {
     setStatus('Collating page ' + (sh.page + 1) + ' (' + (i + 1) + ' of ' + n + ')', true);
     bundlerLcd(['COLLATING', (i + 1) + ' / ' + n, 'PAGE ' + (sh.page + 1)], '#ffd36b');
     refresh();
-    SFX.whoosh(fast ? 0.28 : 0.55, 500, 1800, 0.16);
-    await tween(fast ? 0.3 : 0.62, function (e) {
+    var fl = fast ? 0.3 : 0.62;
+    SFX.whoosh(fl, 500, 1800, 0.16);
+    await tween(fl, function (e) {
       sh.group.position.lerpVectors(p0, p1, e);
       sh.group.position.y += Math.sin(e * Math.PI) * 0.3;
       sh.group.rotation.y = r0 + (r1 - r0) * e;
@@ -981,7 +1080,8 @@ async function doBundle() {
 
   setStatus('Squaring the stack', true);
   bundlerLcd(['JOGGING', n + ' SHEETS'], '#ffd36b');
-  setPhase('bundle:jog'); SFX.rattle(0.8, 16);
+  setPhase('bundle:jog');
+  for (var kq = 0; kq < 6; kq++) { var uq = (2 * kq + 1) / 12; SFX.knock(0.9 * (1 - uq * 0.8), 0.8 * uq); }   // the stack hits the fence at each end of the sway
   await tween(0.8, function (e, u) {
     order.forEach(function (s) { s.group.position.x = s.landing.x * (1 - e); s.group.position.z = s.landing.z * (1 - e); s.group.rotation.y = s.rot * (1 - e); });
     stackG.position.x = STACK0.x + (reduceMotion ? 0 : Math.sin(u * Math.PI * 6) * 0.007 * (1 - u));
@@ -1000,19 +1100,22 @@ async function doBundle() {
     var Lp = 1.18 - topY;
     SFX.servo(0.22, 260, 420, 0.5);
     await tween(0.22, function (e) { setRam(L0 + (Lp - L0) * e); }, ease.inn);
-    SFX.staple();
+    SFX.thud(0.3, 0); SFX.staple();
     var st = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.0016, 0.004), M.chrome);
     st.position.set(sp.x, n * ST + 0.0008, sp.z); st.rotation.y = sp.r; st.castShadow = true; stackG.add(st);
     await sleep(120);
+    SFX.servo(0.22, 420, 260, 0.35);
     await tween(0.22, function (e) { setRam(Lp + (L0 - Lp) * e); }, ease.out);
   }
   await moveHead(0.28, 0.02, 0.5);
 
   setStatus('Delivering the bundle', true);
-  setPhase('bundle:deliver'); SFX.scrape(0.5, 1000, 1600, 0.12);
+  setPhase('bundle:deliver');
   bundlerLcd(['DONE', n + ' PAGES', 'BUNDLE ' + (state.bundles.length + 1)], '#7dffb0');
   var binY = BIN_FLOOR + 0.012 + state.binH;
-  await tween(0.5, function (e) { stackG.position.z = STACK0.z + (0.2 - STACK0.z) * e; });
+  var push = driveNoise(0.6);
+  await tween(0.5, function (e, u) { stackG.position.z = STACK0.z + (0.2 - STACK0.z) * e; var v = velIO(u); push.set(0.02 + 0.11 * v, 900 + 800 * v); });
+  push.stop();
   await dropBundle(stackG, binY);
   state.binH += n * ST + 0.003;
   state.bundles.push({ pages: order.map(function (s) { return s.page + 1; }).reverse(), group: stackG, sheets: order, bw: bw, bl: bl, style: state.staple, spots: spots });
@@ -1035,7 +1138,7 @@ async function inspectBundle(b) {
   var p0 = g.position.clone(), ry0 = g.rotation.y, RX = 0.95;
   var pv = b.style === 'corner' ? { x: b.spots[0].x, z: b.spots[0].z } : b.style === 'side' ? { x: b.spots[0].x, z: 0 } : { x: 0, z: 0 };
   bundlerLcd(['SHOWING', 'BUNDLE ' + (state.bundles.indexOf(b) + 1), n + ' PAGES'], '#7dffb0');
-  SFX.whoosh(0.9, 300, 1100, 0.12);
+  SFX.whoosh(1.1, 300, 1100, 0.12);
   await tween(1.1, function (e) {
     g.position.lerpVectors(p0, SHOW_POS, e); g.position.y += Math.sin(e * Math.PI) * 0.06;
     g.rotation.set(RX * e, ry0 * (1 - e), 0);
@@ -1048,7 +1151,7 @@ async function inspectBundle(b) {
     pivots.push({ g: pvG, sh: sh, a: -(k - j) * D });
   }
   for (var j2 = 0; j2 < k; j2++) {
-    (function (o, last) { SFX.flutter(3, 0, 0.1); o.run = tween(0.55, function (e) { o.g.rotation.y = o.a * e; }, ease.out); })(pivots[j2]);
+    (function (o) { SFX.flutter(3, 0, 0.1); o.run = tween(0.55, function (e) { o.g.rotation.y = o.a * e; }, ease.out); })(pivots[j2]);
     await sleep(320);
   }
   await Promise.all(pivots.map(function (o) { return o.run; }));
@@ -1056,7 +1159,7 @@ async function inspectBundle(b) {
   SFX.flutter(4, 0, 0.1);
   await tween(0.8, function (e) { pivots.forEach(function (o) { o.g.rotation.y = o.a * (1 - e); }); });
   pivots.forEach(function (o) { g.attach(o.sh.group); g.remove(o.g); });
-  SFX.whoosh(0.8, 700, 300, 0.1);
+  SFX.whoosh(1.0, 700, 300, 0.1);
   await tween(1.0, function (e) {
     g.position.lerpVectors(SHOW_POS, p0, e); g.position.y += Math.sin(e * Math.PI) * 0.04;
     g.rotation.set(RX * (1 - e), ry0 * e, 0);
@@ -1595,9 +1698,127 @@ renderer.domElement.addEventListener('pointermove', function (e) {
 });
 renderer.domElement.addEventListener('pointerleave', function () { tip.style.opacity = 0; });
 
+/* ---------- text burned into the picture: hook line, step captions, and the flash used to line up sound ---------- */
+var OV = { scene: new THREE.Scene(), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), cv: newCanvas(4, 4), tex: null, mesh: null,
+  w: 0, h: 0, hook: null, step: null, flash: 0, key: '', style: 'pill', on: false };
+OV.g = OV.cv.getContext('2d');
+OV.tex = new THREE.CanvasTexture(OV.cv);
+OV.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: OV.tex, transparent: true, depthTest: false, depthWrite: false }));
+OV.scene.add(OV.mesh);
+function ovSize() {
+  var sz = renderer.getSize(new THREE.Vector2()), w = Math.round(sz.x), h = Math.round(sz.y);
+  if (w === OV.w && h === OV.h) return;
+  OV.w = w; OV.h = h; OV.cv.width = w; OV.cv.height = h;
+  OV.tex.dispose(); OV.tex = new THREE.CanvasTexture(OV.cv); OV.mesh.material.map = OV.tex; OV.mesh.material.needsUpdate = true; OV.key = '';
+}
+function ovShow(kind, text, sec) { OV[kind] = text ? { text: text, t0: performance.now(), dur: sec * 1000 } : null; OV.key = ''; }
+function ovAlpha(o, now) {
+  if (!o) return 0; var t = now - o.t0; if (t < 0 || t > o.dur) return 0;
+  return ease.out(clamp(Math.min(1, t / 320, (o.dur - t) / 400), 0, 1));
+}
+function ovBlock(g, text, cx, cy, size, a, style) {
+  var W = OV.w, maxW = W * 0.84;
+  g.font = '800 ' + size + 'px "Helvetica Neue",Helvetica,Arial,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  var words = text.split(/\s+/), lines = [], line = '';
+  words.forEach(function (w) { var t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
+  if (line) lines.push(line);
+  var lh = size * 1.2, total = lines.length * lh, y0 = cy - total / 2 + lh / 2 + (1 - a) * size * 0.5, wmax = 0;
+  lines.forEach(function (l) { wmax = Math.max(wmax, g.measureText(l).width); });
+  g.globalAlpha = a;
+  if (style === 'pill') {
+    var pw = wmax + size * 0.9, ph = total + size * 0.5, x = cx - pw / 2, y = y0 - lh / 2 - size * 0.25, r = size * 0.45;
+    g.fillStyle = 'rgba(12,20,28,.8)'; g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + pw, y, x + pw, y + ph, r); g.arcTo(x + pw, y + ph, x, y + ph, r); g.arcTo(x, y + ph, x, y, r); g.arcTo(x, y, x + pw, y, r); g.closePath(); g.fill();
+  }
+  lines.forEach(function (l, i) {
+    var y = y0 + i * lh;
+    if (style === 'mark') { var w2 = g.measureText(l).width + size * 0.5; g.fillStyle = '#ffd23f'; g.fillRect(cx - w2 / 2, y - lh / 2 + size * 0.06, w2, lh - size * 0.1); g.fillStyle = '#14202b'; g.fillText(l, cx, y); }
+    else if (style === 'bold') { g.strokeStyle = '#000'; g.lineWidth = size * 0.2; g.strokeText(l, cx, y); g.fillStyle = '#fff'; g.fillText(l, cx, y); }
+    else { g.fillStyle = '#fff'; g.fillText(l, cx, y); }
+  });
+  g.globalAlpha = 1;
+}
+function ovDraw(now) {
+  var aH = ovAlpha(OV.hook, now), aS = ovAlpha(OV.step, now), fl = OV.flash > now;
+  OV.on = aH > 0 || aS > 0 || fl;
+  if (!OV.on) { OV.key = ''; return; }
+  var key = [OV.w, OV.h, OV.style, aH.toFixed(2), OV.hook && OV.hook.text, aS.toFixed(2), OV.step && OV.step.text, fl].join('|');
+  if (key === OV.key) return; OV.key = key;
+  var g = OV.g, W = OV.w, H = OV.h, base = Math.min(W, H), tall = H > W;
+  g.clearRect(0, 0, W, H);
+  if (fl) { g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); }
+  else {
+    if (aH > 0) ovBlock(g, OV.hook.text, W / 2, H * (tall ? 0.2 : 0.18), base * (tall ? 0.082 : 0.09), aH, OV.style);
+    if (aS > 0) ovBlock(g, OV.step.text, W / 2, H * (tall ? 0.74 : 0.84), base * 0.05, aS, OV.style);
+  }
+  OV.tex.needsUpdate = true;
+}
+
+/* Auto-sync: record a short clip through the real recording path, flash the picture and beep in the same frame, then
+   measure in the finished file how far apart the flash and the beep landed, and set the sound delay to cancel it. */
+var CAL = { on: false, fired: 0, next: 0 };
+function calTick(now) {
+  if (CAL.on && CAL.fired < 4 && now >= CAL.next) {
+    CAL.fired++; CAL.next = now + 1500; OV.flash = now + 600;
+    aTone({ type: 'sine', f0: 1000, dur: 0.1, gain: 0.5, attack: 0.003 });
+  }
+}
+function median(a) { var b = a.slice().sort(function (x, y) { return x - y; }); return b[Math.floor(b.length / 2)]; }
+function setSync(ms, save) {
+  ms = clamp(Math.round(ms), 0, 500); AU.sync = ms;
+  if (AU.rd) AU.rd.delayTime.value = ms / 1000;
+  $('#shSync').value = ms; $('#shSyncOut').textContent = ms + ' ms';
+  if (save) { try { localStorage.setItem('printroom-sync', '' + ms); } catch (e) {} }
+}
+async function calibrateSync() {
+  if (state.busy || state.shooting || state.recording || CAL.on) return;
+  var info = $('#calInfo');
+  if (!window.MediaRecorder || !HTMLVideoElement.prototype.requestVideoFrameCallback) { info.textContent = 'This browser cannot measure it. Use the slider.'; return; }
+  audioInit(); if (!AU.ctx) { info.textContent = 'Sound is not available here.'; return; }
+  if (!AU.on) { info.textContent = 'Turn the sound on first.'; return; }
+  var BASE = 200; AU.rd.delayTime.value = BASE / 1000;
+  info.textContent = 'Measuring, about 10 seconds...'; $('#btnCal').disabled = true;
+  var okStart = startRecording({ size: [640, 360] }); REC.silent = true;
+  if (!okStart) { info.textContent = 'Recording is not available here.'; $('#btnCal').disabled = false; setSync(AU.sync); return; }
+  CAL.fired = 0; CAL.next = performance.now() + 900; CAL.on = true;
+  try {
+    await until(function () { return CAL.fired >= 4; }); await sleep(1400);
+    CAL.on = false;
+    var fin = new Promise(function (r) { REC.onDone = r; }); REC.calBlob = null; stopRecording(); await fin;
+    var blob = REC.calBlob; if (!blob) throw new Error('no clip');
+    var ab = await blob.arrayBuffer(), abuf = await AU.ctx.decodeAudioData(ab.slice(0)), ch = abuf.getChannelData(0), sr = abuf.sampleRate;
+    var beeps = [], last = -1;
+    for (var i = 0; i < ch.length; i++) if (Math.abs(ch[i]) > 0.06 && (last < 0 || i - last > sr * 0.5)) { beeps.push(i / sr); last = i; }
+    var vid = document.createElement('video'), url = URL.createObjectURL(blob), frames = [], cv = newCanvas(32, 18), cg = cv.getContext('2d', { willReadFrequently: true });
+    vid.muted = true; vid.playsInline = true; vid.src = url;
+    await new Promise(function (res, rej) { vid.onloadedmetadata = res; vid.onerror = rej; setTimeout(res, 4000); });
+    function grab(now, meta) {
+      try { cg.drawImage(vid, 0, 0, 32, 18); var d = cg.getImageData(0, 0, 32, 18).data, s = 0; for (var k = 0; k < d.length; k += 4) s += d[k]; frames.push({ t: meta.mediaTime, y: s / (d.length / 4) }); } catch (e) {}
+      if (!vid.ended) vid.requestVideoFrameCallback(grab);
+    }
+    vid.requestVideoFrameCallback(grab);
+    await vid.play();
+    await new Promise(function (res) { vid.onended = res; setTimeout(res, 11000); });
+    URL.revokeObjectURL(url);
+    var ys = frames.map(function (f) { return f.y; }), base = median(ys), hi = Math.max.apply(null, ys), thr = base + (hi - base) * 0.5, flashes = [];
+    if (hi - base < 25) throw new Error('flash not seen: ' + frames.length + ' frames, ' + beeps.length + ' beeps');
+    for (var j = 1; j < frames.length; j++) if (frames[j].y > thr && frames[j - 1].y <= thr) flashes.push(frames[j].t);
+    var diffs = [];
+    beeps.forEach(function (b) { var best = null; flashes.forEach(function (f) { if (best === null || Math.abs(b - f) < Math.abs(b - best)) best = f; }); if (best !== null && Math.abs(b - best) < 0.6) diffs.push(b - best); });
+    if (diffs.length < 2) throw new Error('too few matches (' + beeps.length + ' beeps, ' + flashes.length + ' flashes)');
+    var d = median(diffs) * 1000, next = BASE - d;
+    setSync(next, true);
+    info.textContent = (d > 5 ? 'Sound was ' + Math.round(d) + ' ms behind the picture' : d < -5 ? 'Sound was ' + Math.round(-d) + ' ms ahead of the picture' : 'Sound was already in step') + ' (test delay ' + BASE + ' ms). Delay set to ' + Math.round(AU.sync) + ' ms.';
+  } catch (e) {
+    console.error(e); CAL.on = false; if (state.recording) { REC.silent = true; stopRecording(); }
+    setSync(AU.sync); info.textContent = 'Could not measure it here (' + (e && e.message || e) + '). Use the slider.';
+  }
+  $('#btnCal').disabled = false; REC.silent = false;
+}
+
 /* ---------- studio: camera rig, recording and the shoot director ---------- */
 var V3 = THREE.Vector3;
 var rig = { pos: new V3(), tgt: new V3(), fov: 45, token: 0, shake: false, snap: false, third: 0, thirdCur: 0, cur: { pos: new V3(), tgt: new V3(), fov: 45 } };
+var JIT = { mir: 1, rj: 1, hj: 1 };   // per-shoot variation of every camera move: mirror, distance, height
 var shootStyle = 'fly', abortP = null, abortRes = null, shootT0 = 0, phaseWaiters = [];
 var ABORT = { abort: true };
 ease.sine = function (t) { return 0.5 - 0.5 * Math.cos(Math.PI * t); };
@@ -1648,10 +1869,10 @@ function rigEnd() {
 function shot(sp) {
   var token = ++rig.token, F = sp.tight ? clamp((16 / 9) / (camera.aspect || 16 / 9), 1, 2.6) : framing();
   var a = new V3().fromArray(sp.t0), b = new V3().fromArray(sp.t1 || sp.t0), fv = sp.fov || [45, 45];
-  rig.third = sp.third || 0;
+  rig.third = (sp.third || 0) * JIT.mir;
   function pose(k, p, t) {
     t.lerpVectors(a, b, k);
-    var r = lerp(sp.r[0], sp.r[1], k) * F, az = lerp(sp.az[0], sp.az[1], k), h = lerp(sp.h[0], sp.h[1], k) * F;
+    var r = lerp(sp.r[0], sp.r[1], k) * F * JIT.rj, az = lerp(sp.az[0], sp.az[1], k) * JIT.mir, h = lerp(sp.h[0], sp.h[1], k) * F * JIT.hj;
     p.set(t.x + r * Math.sin(az), t.y + h, t.z + r * Math.cos(az));
     if (sp.follow) { var f = sp.follow(); if (f) t.lerp(f, sp.fw || 0.7); }
     return lerp(fv[0], fv[1], clamp(k, 0, 1.4));
@@ -1690,12 +1911,12 @@ function pickMime() {
   for (var i = 0; i < list.length; i++) { try { if (MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
   return '';
 }
-function startRecording() {
+function startRecording(opt) {
   if (state.recording) return true;
   if (!window.MediaRecorder || !renderer.domElement.captureStream) { toast('This browser cannot record video.'); return false; }
   audioInit();
   var hq = $('#recQ').value === '1080';
-  state.recSize = frameSize();
+  state.recSize = (opt && opt.size) || frameSize();
   state.recording = true; resize();
   try {
     var cs = renderer.domElement.captureStream(30), tracks = cs.getVideoTracks().slice();
@@ -1796,11 +2017,11 @@ function fixWebmDuration(buf, sec) {
   out.set(buf.subarray(info.ds, info.de), info.sizeAt + 8); out.set(add, info.sizeAt + 8 + (info.de - info.ds));
   out.set(buf.subarray(info.de), info.sizeAt + 8 + newSize);
   if (!seg.unknown) {      // a known Segment size has to grow by the same amount
-    var total = 0; for (var n = 0; n < seg.sl; n++) total = total * 256 + buf[seg.size + n];
-    total -= (1 << (7 * 0)) * 0; var mask = Math.pow(2, 7 * seg.sl) - 1;   // strip the length marker
-    var val = (total % Math.pow(2, 7 * seg.sl)) + delta;
-    for (var m2 = seg.sl - 1, vv = val; m2 >= 0; m2--) { out[seg.size + m2] = vv % 256; vv = Math.floor(vv / 256); }
-    out[seg.size] |= (0x80 >> (seg.sl - 1));
+    var marker = 0x80 >> (seg.sl - 1), total = buf[seg.size] & (marker - 1);
+    for (var n = 1; n < seg.sl; n++) total = total * 256 + buf[seg.size + n];
+    total += delta;
+    for (var m2 = seg.sl - 1, vv = total; m2 >= 1; m2--) { out[seg.size + m2] = vv % 256; vv = Math.floor(vv / 256); }
+    out[seg.size] = marker | (vv & (marker - 1));
   }
   return out;
 }
@@ -1817,7 +2038,7 @@ function measureVideo(blob, fallback) {
   });
 }
 async function finishRecording() {
-  if (!REC.chunks.length) return;
+  if (!REC.chunks.length) { if (REC.onDone) REC.onDone(); return; }
   var blob = new Blob(REC.chunks, { type: (REC.mime || 'video/webm').split(';')[0] });
   try {
     var wall = (performance.now() - REC.t0) / 1000, sec = await measureVideo(blob, wall);
@@ -1825,6 +2046,7 @@ async function finishRecording() {
     bytes = blob.type.indexOf('mp4') >= 0 ? fixMp4Duration(bytes, sec) : fixWebmDuration(bytes, sec);
     blob = new Blob([bytes], { type: blob.type }); REC.sec = sec;
   } catch (e) { console.error(e); }
+  if (REC.silent) { REC.silent = false; REC.calBlob = blob; if (REC.onDone) REC.onDone(); return; }
   if (REC.url) URL.revokeObjectURL(REC.url);
   REC.blob = blob; REC.url = URL.createObjectURL(blob);
   var pl = $('#recPlayer'); pl.preload = 'metadata'; pl.src = REC.url; $('#recResult').hidden = false;
@@ -1847,20 +2069,45 @@ async function saveVideo() {
 }
 
 /* the director */
+var RECIPES = {
+  custom:    { s: 1,    wrap: 5,   openers: ['wide', 'drone', 'macro', 'low'], set: null },
+  asmr:      { s: 1.35, wrap: 3.5, openers: ['macro', 'low'],                 set: { style: 'fly', shake: true, speed: 110, pages: 2, steps: false } },
+  explainer: { s: 0.7,  wrap: 2.5, openers: ['drone', 'macro'],               set: { style: 'cut', shake: false, speed: 280, pages: 2, steps: true } },
+  cinematic: { s: 1,    wrap: 6.5, openers: ['wide', 'drone'],                set: { style: 'fly', shake: true, speed: 150, pages: 3, steps: false } },
+  hook:      { s: 0.85, wrap: 3,   openers: ['macro'],                        set: { style: 'fly', shake: true, speed: 200, pages: 2, steps: true } }
+};
+function applyRecipe(name) {
+  var rc = RECIPES[name]; if (!rc || !rc.set) return;
+  $('#shStyle').value = rc.set.style; $('#shShake').checked = rc.set.shake; $('#shSpeed').value = rc.set.speed; $('#shSpeedOut').textContent = rc.set.speed + ' px/s';
+  $('#shPages').value = rc.set.pages; $('#capSteps').checked = rc.set.steps; updateEst();
+}
+var rngFn = Math.random;
+function seedRng(seed) { var a = seed >>> 0; rngFn = function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function rng() { return rngFn(); }
+function choose(arr) { return arr[Math.floor(rng() * arr.length)]; }
+function openerSpec(name, s) {
+  if (name === 'drone') return { t0: [0.3, 0.8, -1.5], r: [0.6, 2.4], az: [0.25, 0.55], h: [6.0, 3.4], fov: [42, 46], dur: 3.4 * s, cut: true };
+  if (name === 'macro') return { t0: [MON.x, 1.28, MON.z], r: [0.5, 2.6], az: [0.12, 0.5], h: [0.08, 0.45], fov: [30, 42], dur: 3.0 * s, cut: true, tight: true };
+  if (name === 'low') return { t0: [PRINTER.x + 0.4, DY + 0.12, PRINTER.z + 0.3], r: [1.1, 3.6], az: [-0.5, 0.25], h: [0.1, 1.0], fov: [38, 44], dur: 3.4 * s, cut: true };
+  return { t0: [0.3, 1.0, -1.6], r: [6.6, 5.4], az: [0.6, 0.28], h: [1.6, 1.25], fov: [45, 40], dur: 3.6 * s, cut: true };
+}
 function shootCfg() {
   var n = state.doc ? state.doc.n : 6;
   return {
     pages: clamp(parseInt($('#shPages').value, 10) || 1, 1, 36), speed: +$('#shSpeed').value,
     sel: parseRange($('#shPrint').value, n), staple: state.staple,
-    style: $('#shStyle').value, shake: $('#shShake').checked, record: $('#shRec').checked
+    style: $('#shStyle').value, shake: $('#shShake').checked, record: $('#shRec').checked,
+    recipe: $('#shRecipe').value, open: $('#shOpen').value, vary: $('#shVary').checked, randLook: $('#shRandLook').checked,
+    seed: clamp(parseInt($('#shSeed').value, 10) || 0, 0, 999999),
+    hook: $('#capHook').value.trim(), outro: $('#capOutro').value.trim(), capStyle: $('#capStyle').value, steps: $('#capSteps').checked
   };
 }
 function updateEst() {
-  var c = shootCfg(), M = docMetrics(), n = c.sel.size;
+  var c = shootCfg(), M = docMetrics(), n = c.sel.size, S = (RECIPES[c.recipe] || RECIPES.custom).s;
   var D = Math.max(3, M.at(c.pages) / c.speed);
   var per = n <= 8 ? 1.5 : n <= 20 ? 0.9 : 0.55, f = per >= 1.4 ? 1.1 : 0.5;
   var print = n * (f + per + 0.18), bund = n * (n > 20 ? 0.3 : 0.62) + 0.8 + (c.staple === 'corner' ? 1 : 1.9) + 3.4;
-  var total = 3.6 + D + 1.6 + print + 0.9 + bund + 0.6 + 6.4 + 15 + (c.style === 'fly' ? 7 : 0);
+  var total = (3.6 + 1.6 + 0.9 + 0.6 + 6.4 + 15 + (c.style === 'fly' ? 7 : 0)) * S + D + print + bund;
   $('#shEst').textContent = n ? 'Estimated length ' + fmtDur(total) + '.' : 'Enter the pages to print, for example 1-3.';
   $('#btnShoot').disabled = !n || state.shooting;
 }
@@ -1869,10 +2116,18 @@ async function runShoot() {
   if (state.shooting) return;
   if (state.busy) { toast('Wait until the current job has finished.'); return; }
   if (!state.doc) useSample();
-  var cfg = shootCfg();
+  var cfg = shootCfg(), RC = RECIPES[cfg.recipe] || RECIPES.custom, S = RC.s;
   if (!cfg.sel.size) { toast('Enter the pages to print, for example 1-3.'); return; }
   var doc = state.doc, M = docMetrics();
   var saved = { loop: state.loop, playing: state.playing, speed: state.speed };
+  // every shoot gets its own camera plan: mirrored or not, nearer or further, a different opener
+  var seed = cfg.seed || 1000 + Math.floor(Math.random() * 9000); seedRng(seed);
+  JIT.mir = cfg.vary && rng() < 0.5 ? -1 : 1; JIT.rj = cfg.vary ? 0.92 + rng() * 0.2 : 1; JIT.hj = cfg.vary ? 0.9 + rng() * 0.25 : 1;
+  var openName = cfg.open === 'auto' ? (cfg.vary ? choose(RC.openers) : RC.openers[0]) : cfg.open;
+  if (cfg.randLook) { var lk = choose(Object.keys(LOOKS)); $('#shLook').value = lk; applyLook(lk); }
+  OV.style = cfg.capStyle; ovShow('hook', '', 0); ovShow('step', '', 0);
+  $('#shSeedInfo').textContent = 'Last shoot: variation ' + seed + (JIT.mir < 0 ? ', mirrored' : '') + ', opener ' + openName + '. Type the number above to repeat it.';
+  function cap(t) { if (cfg.steps) ovShow('step', t, 2.6); }
   state.sel = cfg.sel; state.staple = cfg.staple; syncSel(); syncStaple();
   state.recSize = frameSize();
   state.shooting = true; state.abort = false; shootT0 = performance.now();
@@ -1887,10 +2142,11 @@ async function runShoot() {
     syncPlay(); showControls();
     var fl = shootStyle === 'cut' ? 0 : 1.4;
 
-    shootLabel('Establishing shot');
-    await A(shot({ t0: [0.3, 1.0, -1.6], r: [6.6, 5.4], az: [0.6, 0.28], h: [1.6, 1.25], fov: [45, 40], dur: 3.6, cut: true }));
+    shootLabel('Opening shot');
+    if (cfg.hook) ovShow('hook', cfg.hook, Math.max(3, 3.4 * S));
+    await A(shot(openerSpec(openName, S)));
 
-    shootLabel('Scrolling the document');
+    shootLabel('Scrolling the document'); cap('1 · Scroll the PDF');
     var target = M.at(cfg.pages), D = Math.max(3, target / cfg.speed);
     var started = false; state.endHold = 0;
     var scrolled = until(function () { return started && (state.scrollY >= target - 1 || !state.playing); }).then(function () { state.playing = false; });
@@ -1899,9 +2155,9 @@ async function runShoot() {
       await shot({ t0: [MON.x, 1.28, MON.z], r: [1.1, 0.88], az: [-0.1, 0.05], h: [0.1, 0.06], fov: [40, 34], dur: Math.max(1.5, D * 0.45 - fl), tight: true });
     })();
     await A(Promise.all([scrolled, camWork]));
-    await A(sleep(400));
+    await A(sleep(400 * S));
 
-    shootLabel('Printing');
+    shootLabel('Printing'); cap('2 · Print the pages');
     var n = Array.from(state.sel).filter(function (i) { return doc.pages[i]; }).length;
     var per = n <= 8 ? 1.5 : n <= 20 ? 0.9 : 0.55, f1 = per >= 1.4 ? 0.8 : 0.35, f2 = per >= 1.4 ? 0.3 : 0.15, feedTot = f1 + f2;
     var firstOut = waitPhase('print:first-out'), printP = null;
@@ -1912,31 +2168,31 @@ async function runShoot() {
     await A(Promise.race([sleep(frontT * 1000), printP]));
     if (state.phase !== 'print:done') {
       // close in from above on the sheets as they land, so the printed pages can be read
-      shootLabel('Printed pages');
+      shootLabel('Printed pages'); cap('Fresh off the printer');
       shot({ t0: [PRINTER.x, TRAY_Y + 0.01, PRINTER.z + 0.36], r: [0.22, 0.16], az: [0.25, 0.05], h: [0.9, 0.62], fov: [38, 30], tight: true, dur: Math.max(2, printT - frontT), follow: followSheet, fw: 0.3 });
     }
     await A(printP);
-    if (state.phase === 'print:done') shot({ t0: [PRINTER.x, TRAY_Y + 0.01, PRINTER.z + 0.36], r: [0.2, 0.15], az: [0.1, 0.0], h: [0.78, 0.6], fov: [34, 28], tight: true, dur: 3.5 });
-    await A(sleep(2200));
+    if (state.phase === 'print:done') shot({ t0: [PRINTER.x, TRAY_Y + 0.01, PRINTER.z + 0.36], r: [0.2, 0.15], az: [0.1, 0.0], h: [0.78, 0.6], fov: [34, 28], tight: true, dur: 3.5 * S });
+    await A(sleep(2200 * S));
 
-    shootLabel('Collating');
+    shootLabel('Collating'); cap('3 · Collate in page order');
     var nb = state.tray.length, collT = nb * (nb > 20 ? 0.3 : 0.62) + 0.8;
     var onStaple = waitPhase('bundle:staple'), onDeliver = waitPhase('bundle:deliver');
     var bundleP = null;
     shot({ t0: [BUNDLER.x - 0.05, 0.95, BUNDLER.z + 0.1], r: [1.7, 1.2], az: [0.75, 0.4], h: [1.0, 0.75], dur: collT + 0.6, follow: followStack, fw: 0.4, third: 0.6, onArrive: function () { bundleP = doBundle(); } });
     await A(onStaple);
-    shootLabel('Stapling');
+    shootLabel('Stapling'); cap(state.staple === 'corner' ? '4 · Corner staple' : state.staple === 'middle' ? '4 · Two middle staples' : '4 · Two side staples');
     shot({ t0: [BUNDLER.x - 0.1, 0.97, BUNDLER.z], r: [0.9, 0.62], az: [0.5, 0.25], h: [0.6, 0.42], fov: [45, 32], tight: true, dur: (state.staple === 'corner' ? 1 : 2) * 0.95 + 0.9 });
     await A(onDeliver);
-    shootLabel('Delivering the bundle');
+    shootLabel('Delivering the bundle'); cap('5 · Into the bin');
     shot({ t0: [BUNDLER.x - 0.05, 0.62, BUNDLER.z + 0.42], r: [1.6, 1.35], az: [0.9, 1.1], h: [0.85, 0.7], dur: 3, fly: 1.2, follow: followStack, fw: 0.85, third: -0.5 });
     await A(bundleP);
     await A(sleep(500));
 
     shootLabel('Inside the bin');
-    shot({ t0: [BUNDLER.x + STACK0.x, BIN_FLOOR + 0.05 + state.binH, BUNDLER.z + 0.57], r: [0.3, 0.2], az: [0.4, 0.1], h: [0.85, 0.62], fov: [38, 30], tight: true, dur: 3 });
-    await A(sleep(2800));
-    shootLabel('The finished bundle');
+    shot({ t0: [BUNDLER.x + STACK0.x, BIN_FLOOR + 0.05 + state.binH, BUNDLER.z + 0.57], r: [0.3, 0.2], az: [0.4, 0.1], h: [0.85, 0.62], fov: [38, 30], tight: true, dur: 3 * S });
+    await A(sleep(2800 * S));
+    shootLabel('The finished bundle'); cap('The finished bundle');
     var lastB = state.bundles[state.bundles.length - 1], showW = bundlerG.localToWorld(SHOW_POS.clone());
     var insp = null;
     shot({ t0: [showW.x, showW.y, showW.z], r: [1.05, 0.62], az: [0.4, -0.05], h: [0.6, 0.3], fov: [38, 30], tight: true, third: 0.3, dur: 9, fly: 1.6, follow: followStack, fw: 0.9, onArrive: function () { insp = inspectBundle(lastB); } });
@@ -1945,12 +2201,14 @@ async function runShoot() {
     await A(sleep(600));
 
     shootLabel('Wrap shot');
-    await A(shot({ t0: [0.6, 1.0, -1.4], r: [3.2, 6.6], az: [0.15, -0.3], h: [0.8, 1.7], fov: [38, 46], dur: 5 }));
+    if (cfg.outro) ovShow('hook', cfg.outro, Math.max(3, RC.wrap - 0.2));
+    await A(shot({ t0: [0.6, 1.0, -1.4], r: [3.2, 6.6], az: [0.15, -0.3], h: [0.8, 1.7], fov: [38, 46], dur: RC.wrap }));
     await A(sleep(400));
   } catch (e) {
     if (e !== ABORT) console.error(e);
   } finally {
     rig.token++; rigEnd();
+    ovShow('hook', '', 0); ovShow('step', '', 0); JIT.mir = 1; JIT.rj = 1; JIT.hj = 1;
     document.body.classList.remove('shooting'); state.shooting = false;
     if (startedRec) stopRecording();
     state.loop = saved.loop; state.speed = saved.speed; state.playing = saved.playing; syncPlay();
@@ -1967,6 +2225,12 @@ $('#btnShoot').addEventListener('click', runShoot);
 $('#btnStop').addEventListener('click', function () { state.abort = true; if (abortRes) abortRes(); });
 $('#btnRec').addEventListener('click', function () { if (state.recording) stopRecording(); else startRecording(); });
 $('#btnSave').addEventListener('click', saveVideo);
+$('#shRecipe').addEventListener('change', function () { applyRecipe(this.value); });
+$('#shLook').addEventListener('change', function () { applyLook(this.value); });
+$('#shPaper').addEventListener('change', function () { setPaper(this.value); });
+$('#shSync').addEventListener('input', function (e) { setSync(+e.target.value, true); });
+$('#btnCal').addEventListener('click', calibrateSync);
+setSync(AU.sync);
 $('#btnSound').addEventListener('click', function () {
   AU.on = !AU.on; audioInit();
   if (AU.master) AU.master.gain.value = AU.on ? AU.vol : 0;
@@ -1975,7 +2239,7 @@ $('#btnSound').addEventListener('click', function () {
 });
 window.addEventListener('pointerdown', audioInit, { passive: true });
 window.addEventListener('keydown', audioInit);
-document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('button')) SFX.click(); });
+document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b && !/^(btnShoot|btnCal|btnRec|btnStop)$/.test(b.id)) SFX.click(); });   // no UI click in the soundtrack of a recording
 setInterval(function () {
   var rb = $('#recBadge');
   if (state.recording) { rb.hidden = false; rb.textContent = 'REC ' + fmtT((performance.now() - REC.t0) / 1000); } else rb.hidden = true;
@@ -2010,7 +2274,10 @@ function frame(now) {
   // while recording, render at a steady 30 fps (the speed the video is captured at) so frames are never half-drawn or doubled
   if ((state.recording || state.shooting) && now - lastRender < 31) return;
   lastRender = now;
+  if (CAL.on) calTick(now);
+  if (state.shooting || CAL.on) { ovSize(); ovDraw(now); } else OV.on = false;
   renderer.render(scene, camera);
+  if (OV.on) { renderer.autoClear = false; renderer.clearDepth(); renderer.render(OV.scene, OV.cam); renderer.autoClear = true; }
 }
 
 /* ---------- start ---------- */
