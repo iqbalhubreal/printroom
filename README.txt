@@ -1,1 +1,0 @@
-Print Room. Open index.html in a browser (needs internet for three.js and pdf.js from CDNs).
